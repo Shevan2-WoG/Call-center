@@ -11,6 +11,7 @@ import {
   History,
   RotateCcw,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { UserRole } from '../types';
 
@@ -25,6 +26,7 @@ interface NavbarProps {
   setSelectedCallerId?: (id: string) => void;
   callers: { id: string; name: string }[];
   onResetData: () => void;
+  onEmptyData: () => void;
   isSyncing: boolean;
 }
 
@@ -39,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setSelectedCallerId,
   callers,
   onResetData,
+  onEmptyData,
   isSyncing,
 }) => {
   const tabs = [
@@ -161,15 +164,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
 
+            {/* Empty Database / Start Fresh Session */}
+            <button
+              type="button"
+              onClick={onEmptyData}
+              title="Empty database and wipe contacts, callers, and assignments to start fresh"
+              className="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-700 flex items-center gap-1 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Empty Database</span>
+            </button>
+
             {/* Reset / Seed Demo Data */}
             <button
               type="button"
               onClick={onResetData}
-              title="Reset or re-seed standard demonstration data"
+              title="Load sample demonstration data for testing"
               className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center gap-1 transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Reset Demo</span>
+              <span className="hidden lg:inline">Sample Demo</span>
             </button>
           </div>
         </div>

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 interface CallerDashboardViewProps {
-  currentCaller: Caller;
+  currentCaller?: Caller;
   assignments: Assignment[];
   callingDate: string;
   attempts: CallAttempt[];
@@ -40,6 +40,20 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFeedbackAssignment, setActiveFeedbackAssignment] = useState<Assignment | null>(null);
   const [historyContact, setHistoryContact] = useState<{ id: string; name: string } | null>(null);
+
+  if (!currentCaller) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-xl mx-auto my-8">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <Headset className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-bold text-slate-900 mb-1">No Active Caller Available</h3>
+        <p className="text-xs text-slate-500 mb-2">
+          There are no callers registered in the system yet. Register daily callers in the "Daily Callers" tab to begin calling operations.
+        </p>
+      </div>
+    );
+  }
 
   // Filter assignments for this caller on this date
   const myAssignments = assignments.filter(

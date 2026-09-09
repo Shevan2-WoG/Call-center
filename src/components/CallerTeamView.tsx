@@ -148,7 +148,29 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
       </div>
 
       {/* Callers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {callers.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center shadow-2xs">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-7 h-7" />
+          </div>
+          <h3 className="text-base font-bold text-slate-800 mb-1">No Daily Callers Registered</h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
+            Register the callers available to make calls today along with their WhatsApp phone numbers to distribute contacts equally.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              setShowAddModal(true);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            Register First Caller
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {callers.map((caller) => {
           const isAvail = caller.availabilityStatus === 'available';
           const isBusy = caller.availabilityStatus === 'busy';
@@ -293,6 +315,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
           );
         })}
       </div>
+      )}
 
       {/* Add / Edit Caller Modal */}
       {showAddModal && (

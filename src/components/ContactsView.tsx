@@ -4,6 +4,7 @@ import {
   parseContactExcel,
   downloadExcelTemplate,
   ParseExcelResult,
+  normalizePhoneNumber,
 } from '../services/excelService';
 import {
   Upload,
@@ -19,22 +20,37 @@ import {
   Phone,
   MapPin,
   Tag,
+  UserPlus,
+  Trash2,
+  X,
 } from 'lucide-react';
 
 interface ContactsViewProps {
   contacts: Contact[];
   onImportContacts: (contacts: Omit<Contact, 'id' | 'createdAt' | 'status'>[]) => Promise<void>;
+  onDeleteContact?: (contactId: string) => Promise<void>;
   onRefresh: () => void;
 }
 
 export const ContactsView: React.FC<ContactsViewProps> = ({
   contacts,
   onImportContacts,
+  onDeleteContact,
   onRefresh,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+
+  // Manual single contact modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [manualName, setManualName] = useState('');
+  const [manualPhone, setManualPhone] = useState('');
+  const [manualLocation, setManualLocation] = useState('');
+  const [manualCategory, setManualCategory] = useState('General');
+  const [manualNotes, setManualNotes] = useState('');
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [isSavingManual, setIsSavingManual] = useState(false);
 
   // Import flow state
   const [isParsing, setIsParsing] = useState(false);
@@ -44,6 +60,50 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resetManualForm = () => {
+    setManualName('');
+    setManualPhone('');
+    setManualLocation('');
+    setManualCategory('General');
+    setManualNotes('');
+    setModalError(null);
+    setShowAddModal(false);
+  };
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualName.trim()) {
+      setModalError('Contact Name is required');
+      return;
+    }
+    const norm = normalizePhoneNumber(manualPhone);
+    if (!norm.isValid) {
+      setModalError(`Invalid phone number: ${norm.error}`);
+      return;
+    }
+
+    setIsSavingManual(true);
+    try {
+      await onImportContacts([
+        {
+          name: manualName.trim(),
+          phone: manualPhone.trim(),
+          normalizedPhone: norm.normalized,
+          location: manualLocation.trim() || undefined,
+          category: manualCategory.trim() || 'General',
+          notes: manualNotes.trim() || undefined,
+          source: 'Manual Entry',
+        },
+      ]);
+      setImportSuccessMsg(`Contact "${manualName.trim()}" added successfully!`);
+      resetManualForm();
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to save contact');
+    } finally {
+      setIsSavingManual(false);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,14 +167,27 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={downloadExcelTemplate}
-            className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors self-start sm:self-auto cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-600" />
-            Download Excel Template
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={() => {
+                resetManualForm();
+                setShowAddModal(true);
+              }}
+              className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              Add Single Contact
+            </button>
+            <button
+              type="button"
+              onClick={downloadExcelTemplate}
+              className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-600" />
+              Excel Template
+            </button>
+          </div>
         </div>
 
         <div className="p-5">
@@ -417,13 +490,43 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 <th className="p-3">Notes</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Source</th>
+                {onDeleteContact && <th className="p-3 text-right">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {filteredContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">
-                    No contacts found matching criteria.
+                  <td colSpan={onDeleteContact ? 9 : 8} className="p-12 text-center">
+                    <div className="max-w-md mx-auto space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                        <UserPlus className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-800">No Contacts in Database</p>
+                      <p className="text-xs text-slate-500">
+                        The contacts database is completely empty. Upload your Excel contact roster or add individual contacts to begin.
+                      </p>
+                      <div className="flex items-center justify-center gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            resetManualForm();
+                            setShowAddModal(true);
+                          }}
+                          className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          Add First Contact
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          Upload Excel (.xlsx)
+                        </button>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -469,6 +572,22 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                       <td className="p-3 text-slate-400 text-[11px] truncate max-w-xs">
                         {contact.source || 'Direct'}
                       </td>
+                      {onDeleteContact && (
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete contact "${contact.name}"?`)) {
+                                onDeleteContact(contact.id);
+                              }
+                            }}
+                            title="Delete Contact"
+                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })
@@ -477,6 +596,130 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Manual Add Contact Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 relative">
+            <button
+              type="button"
+              onClick={resetManualForm}
+              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Add New Contact</h3>
+                <p className="text-xs text-slate-500">Enter contact details for calling operations</p>
+              </div>
+            </div>
+
+            {modalError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                {modalError}
+              </div>
+            )}
+
+            <form onSubmit={handleManualSubmit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  placeholder="e.g. John Mukasa"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={manualPhone}
+                  onChange={(e) => setManualPhone(e.target.value)}
+                  placeholder="e.g. +256701234567 or 0701234567"
+                  required
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800 font-mono"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Numbers will be normalized to international E.164 format.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Location / District</label>
+                  <input
+                    type="text"
+                    value={manualLocation}
+                    onChange={(e) => setManualLocation(e.target.value)}
+                    placeholder="e.g. Kampala"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Category</label>
+                  <input
+                    type="text"
+                    value={manualCategory}
+                    onChange={(e) => setManualCategory(e.target.value)}
+                    placeholder="e.g. General, VIP"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Notes (Optional)</label>
+                <textarea
+                  rows={2}
+                  value={manualNotes}
+                  onChange={(e) => setManualNotes(e.target.value)}
+                  placeholder="Context, background, preferred calling time..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800 resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={resetManualForm}
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingManual}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  {isSavingManual ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Save Contact
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

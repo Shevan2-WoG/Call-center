@@ -78,6 +78,20 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
     }
   };
 
+  if (callers.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center max-w-xl mx-auto my-8 shadow-2xs">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <RotateCcw className="w-6 h-6" />
+        </div>
+        <h3 className="text-base font-bold text-slate-900 mb-1">No Callers Registered Yet</h3>
+        <p className="text-xs text-slate-500">
+          Workload reassignment will be enabled once daily callers are registered and contacts have been distributed.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Overview header */}

@@ -17,6 +17,7 @@ import {
   getReassignments,
   getAuditLogs,
   saveContactsBatch,
+  deleteContact,
   saveCaller,
   deleteCaller,
   saveAssignmentsBatch,
@@ -25,6 +26,7 @@ import {
   saveReassignmentsBatch,
   logAudit,
   seedInitialDataIfEmpty,
+  clearAllDatabaseData,
 } from './services/dbService';
 import { Navbar } from './components/Navbar';
 import { DistributionView } from './components/DistributionView';
@@ -58,7 +60,6 @@ export default function App() {
   const loadData = useCallback(async () => {
     setIsSyncing(true);
     try {
-      await seedInitialDataIfEmpty(callingDate);
       const [
         cntList,
         clrList,
@@ -82,15 +83,19 @@ export default function App() {
       setReassignments(reaList);
       setAuditLogs(audList);
 
-      if (!selectedCallerId && clrList.length > 0) {
-        setSelectedCallerId(clrList[0].id);
+      if (clrList.length > 0) {
+        if (!selectedCallerId || !clrList.some(c => c.id === selectedCallerId)) {
+          setSelectedCallerId(clrList[0].id);
+        }
+      } else {
+        setSelectedCallerId('');
       }
     } catch (err) {
       console.error('Error loading data:', err);
     } finally {
       setIsSyncing(false);
     }
-  }, [callingDate, selectedCallerId]);
+  }, [selectedCallerId]);
 
   useEffect(() => {
     loadData();
@@ -133,6 +138,25 @@ export default function App() {
         metadata: {
           importedCount: created.length,
         },
+      });
+      await loadData();
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Single Contact Delete Handler
+  const handleDeleteContact = async (contactId: string) => {
+    setIsSyncing(true);
+    try {
+      await deleteContact(contactId);
+      await logAudit({
+        userId: 'admin',
+        userName: 'Administrator',
+        userRole: 'admin',
+        action: 'CONTACT_DELETED',
+        entity: 'contacts',
+        metadata: { contactId },
       });
       await loadData();
     } finally {
@@ -229,12 +253,45 @@ export default function App() {
     }
   };
 
-  // Reset demo data handler
+  // Empty all database data to start completely fresh
+  const handleEmptyAllData = async () => {
+    if (
+      window.confirm(
+        'Empty the entire database? All contacts, callers, assignments, and calling records will be cleared so you can fill new data from scratch.'
+      )
+    ) {
+      setIsSyncing(true);
+      try {
+        await clearAllDatabaseData();
+        setContacts([]);
+        setCallers([]);
+        setAssignments([]);
+        setAttempts([]);
+        setReassignments([]);
+        setAuditLogs([]);
+        setSelectedCallerId('');
+      } catch (err) {
+        console.error('Error emptying database:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+  };
+
+  // Reset / seed demo data handler
   const handleResetDemoData = async () => {
-    if (confirm('Re-seed the system with standard demo callers, contacts, and calling roster for 2026-09-09?')) {
-      localStorage.clear();
-      await seedInitialDataIfEmpty(callingDate);
-      await loadData();
+    if (
+      window.confirm(
+        'Load sample demonstration callers and contacts for testing?'
+      )
+    ) {
+      setIsSyncing(true);
+      try {
+        await seedInitialDataIfEmpty(callingDate, true);
+        await loadData();
+      } finally {
+        setIsSyncing(false);
+      }
     }
   };
 
@@ -267,6 +324,7 @@ export default function App() {
         setSelectedCallerId={setSelectedCallerId}
         callers={callers.map((c) => ({ id: c.id, name: c.name }))}
         onResetData={handleResetDemoData}
+        onEmptyData={handleEmptyAllData}
         isSyncing={isSyncing}
       />
 
@@ -287,6 +345,7 @@ export default function App() {
           <ContactsView
             contacts={contacts}
             onImportContacts={handleImportContacts}
+            onDeleteContact={handleDeleteContact}
             onRefresh={loadData}
           />
         )}

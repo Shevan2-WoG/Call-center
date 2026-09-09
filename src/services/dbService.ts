@@ -57,30 +57,26 @@ function setLocal<T>(key: string, val: T): void {
 export async function getUsers(): Promise<User[]> {
   try {
     const snap = await getDocs(collection(db, 'users'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
-      setLocal(STORAGE_KEYS.USERS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as User));
+    setLocal(STORAGE_KEYS.USERS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read error, using local state for users', err);
+    return getLocal<User[]>(STORAGE_KEYS.USERS, []);
   }
-  return getLocal<User[]>(STORAGE_KEYS.USERS, []);
 }
 
 // ------------------- CALLERS -------------------
 export async function getCallers(): Promise<Caller[]> {
   try {
     const snap = await getDocs(collection(db, 'callers'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Caller));
-      setLocal(STORAGE_KEYS.CALLERS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Caller));
+    setLocal(STORAGE_KEYS.CALLERS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read error for callers', err);
+    return getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []);
   }
-  return getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []);
 }
 
 export async function saveCaller(caller: Caller): Promise<void> {
@@ -115,15 +111,13 @@ export async function deleteCaller(callerId: string): Promise<void> {
 export async function getContacts(): Promise<Contact[]> {
   try {
     const snap = await getDocs(collection(db, 'contacts'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Contact));
-      setLocal(STORAGE_KEYS.CONTACTS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Contact));
+    setLocal(STORAGE_KEYS.CONTACTS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read contacts error', err);
+    return getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
   }
-  return getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
 }
 
 export async function saveContactsBatch(newContacts: Omit<Contact, 'id' | 'createdAt' | 'status'>[]): Promise<Contact[]> {
@@ -154,6 +148,17 @@ export async function saveContactsBatch(newContacts: Omit<Contact, 'id' | 'creat
   return created;
 }
 
+export async function deleteContact(contactId: string): Promise<void> {
+  const contacts = getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []).filter(c => c.id !== contactId);
+  setLocal(STORAGE_KEYS.CONTACTS, contacts);
+
+  try {
+    await deleteDoc(doc(db, 'contacts', contactId));
+  } catch (err) {
+    console.warn('Firestore delete contact error', err);
+  }
+}
+
 export async function updateContactStatus(contactId: string, status: Contact['status']): Promise<void> {
   const contacts = getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
   const idx = contacts.findIndex(c => c.id === contactId);
@@ -177,15 +182,13 @@ export async function updateContactStatus(contactId: string, status: Contact['st
 export async function getDailyTeams(): Promise<DailyTeam[]> {
   try {
     const snap = await getDocs(collection(db, 'dailyTeams'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyTeam));
-      setLocal(STORAGE_KEYS.TEAMS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as DailyTeam));
+    setLocal(STORAGE_KEYS.TEAMS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read dailyTeams error', err);
+    return getLocal<DailyTeam[]>(STORAGE_KEYS.TEAMS, []);
   }
-  return getLocal<DailyTeam[]>(STORAGE_KEYS.TEAMS, []);
 }
 
 export async function saveDailyTeam(team: DailyTeam): Promise<void> {
@@ -207,15 +210,14 @@ export async function saveDailyTeam(team: DailyTeam): Promise<void> {
 
 // ------------------- ASSIGNMENTS -------------------
 export async function getAssignments(callingDate?: string): Promise<Assignment[]> {
-  let list = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
+  let list: Assignment[] = [];
   try {
     const snap = await getDocs(collection(db, 'assignments'));
-    if (!snap.empty) {
-      list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Assignment));
-      setLocal(STORAGE_KEYS.ASSIGNMENTS, list);
-    }
+    list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Assignment));
+    setLocal(STORAGE_KEYS.ASSIGNMENTS, list);
   } catch (err) {
     console.warn('Firestore read assignments error', err);
+    list = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
   }
 
   if (callingDate) {
@@ -278,15 +280,13 @@ export async function updateAssignmentsBatch(updatedList: Assignment[]): Promise
 export async function getCallAttempts(): Promise<CallAttempt[]> {
   try {
     const snap = await getDocs(collection(db, 'callAttempts'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as CallAttempt));
-      setLocal(STORAGE_KEYS.CALL_ATTEMPTS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as CallAttempt));
+    setLocal(STORAGE_KEYS.CALL_ATTEMPTS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read callAttempts error', err);
+    return getLocal<CallAttempt[]>(STORAGE_KEYS.CALL_ATTEMPTS, []);
   }
-  return getLocal<CallAttempt[]>(STORAGE_KEYS.CALL_ATTEMPTS, []);
 }
 
 /**
@@ -359,15 +359,13 @@ export async function recordCallAttempt(attemptData: Omit<CallAttempt, 'id' | 'c
 export async function getReassignments(): Promise<ReassignmentRecord[]> {
   try {
     const snap = await getDocs(collection(db, 'reassignments'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReassignmentRecord));
-      setLocal(STORAGE_KEYS.REASSIGNMENTS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as ReassignmentRecord));
+    setLocal(STORAGE_KEYS.REASSIGNMENTS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read reassignments error', err);
+    return getLocal<ReassignmentRecord[]>(STORAGE_KEYS.REASSIGNMENTS, []);
   }
-  return getLocal<ReassignmentRecord[]>(STORAGE_KEYS.REASSIGNMENTS, []);
 }
 
 export async function saveReassignmentsBatch(records: Omit<ReassignmentRecord, 'id'>[]): Promise<void> {
@@ -394,15 +392,13 @@ export async function saveReassignmentsBatch(records: Omit<ReassignmentRecord, '
 export async function getAuditLogs(): Promise<AuditLog[]> {
   try {
     const snap = await getDocs(collection(db, 'auditLogs'));
-    if (!snap.empty) {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog));
-      setLocal(STORAGE_KEYS.AUDIT_LOGS, list);
-      return list;
-    }
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog));
+    setLocal(STORAGE_KEYS.AUDIT_LOGS, list);
+    return list;
   } catch (err) {
     console.warn('Firestore read auditLogs error', err);
+    return getLocal<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, []);
   }
-  return getLocal<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, []);
 }
 
 export async function logAudit(logData: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void> {
@@ -482,11 +478,16 @@ export function buildDailyReportSummary(
 }
 
 // ------------------- INITIAL SEED DATA -------------------
-export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09'): Promise<void> {
+export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', force = false): Promise<void> {
+  // Respect user intent: only seed if explicitly forced by the user
+  if (!force) {
+    return;
+  }
+
   const existingCallers = await getCallers();
   const existingContacts = await getContacts();
 
-  if (existingCallers.length > 0 && existingContacts.length > 0) {
+  if (!force && existingCallers.length > 0 && existingContacts.length > 0) {
     return; // Already initialized
   }
 
@@ -667,3 +668,52 @@ export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09'):
     },
   });
 }
+
+// ------------------- CLEAR / EMPTY ALL DATA -------------------
+export async function clearAllDatabaseData(): Promise<void> {
+  // Clear local storage entirely
+  try {
+    localStorage.clear();
+  } catch (e) {
+    // ignore
+  }
+
+  // Explicitly remove all individual keys
+  Object.values(STORAGE_KEYS).forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch (e) {
+      // ignore
+    }
+  });
+
+  // Purge Firestore collections in chunked batches of 400
+  const collections = [
+    'contacts',
+    'callers',
+    'dailyTeams',
+    'assignments',
+    'callAttempts',
+    'reassignments',
+    'auditLogs',
+    'users',
+  ];
+
+  for (const colName of collections) {
+    try {
+      const snap = await getDocs(collection(db, colName));
+      if (!snap.empty) {
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const batch = writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach((docSnap) => {
+            batch.delete(docSnap.ref);
+          });
+          await batch.commit();
+        }
+      }
+    } catch (err) {
+      console.warn(`Firestore clear error on ${colName}:`, err);
+    }
+  }
+}
+

@@ -44,6 +44,12 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   const [selectedCallerIds, setSelectedCallerIds] = useState<string[]>(
     callers.filter((c) => c.availabilityStatus === 'available').map((c) => c.id)
   );
+
+  React.useEffect(() => {
+    setSelectedCallerIds(
+      callers.filter((c) => c.availabilityStatus === 'available').map((c) => c.id)
+    );
+  }, [callers]);
   const [isDistributing, setIsDistributing] = useState(false);
   const [copiedCallerId, setCopiedCallerId] = useState<string | null>(null);
   const [activePreviewCallerId, setActivePreviewCallerId] = useState<string | null>(null);
@@ -109,6 +115,37 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Empty Database Guidance Notice */}
+      {contacts.length === 0 && callers.length === 0 && (
+        <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6 shadow-2xs">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold text-emerald-950">Database Clean & Ready for New Data</h3>
+              <p className="text-xs text-emerald-800 leading-relaxed max-w-2xl">
+                All records have been cleared. Follow these simple steps to populate and manage today's calling activities:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
+                  <strong className="block text-slate-900 mb-0.5">1. Import Contacts</strong>
+                  <span className="text-slate-600">Go to <strong>Contacts & Import</strong> to upload your Excel (.xlsx) file.</span>
+                </div>
+                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
+                  <strong className="block text-slate-900 mb-0.5">2. Register Callers</strong>
+                  <span className="text-slate-600">Go to <strong>Daily Callers</strong> to enter available team members & WhatsApp numbers.</span>
+                </div>
+                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
+                  <strong className="block text-slate-900 mb-0.5">3. Distribute Fairly</strong>
+                  <span className="text-slate-600">Return here to run equal distribution and generate WhatsApp dispatches.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Banner & KPI metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
