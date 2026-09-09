@@ -1,0 +1,109 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "System users including Admin, Caller, and Technical Lead",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "contacts": {
+      "title": "Contact",
+      "description": "Contacts uploaded from Excel",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "normalizedPhone": { "type": "string" },
+        "location": { "type": "string" },
+        "category": { "type": "string" },
+        "notes": { "type": "string" },
+        "source": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "phone"]
+    },
+    "callers": {
+      "title": "Caller",
+      "description": "Registered callers/agents with WhatsApp numbers and availability",
+      "properties": {
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "availabilityStatus": { "type": "string" },
+        "teamGroup": { "type": "string" },
+        "targetCalls": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "whatsappNumber", "availabilityStatus"]
+    },
+    "dailyTeams": {
+      "title": "Daily Calling Team",
+      "description": "Calling teams organized by date",
+      "properties": {
+        "callingDate": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "status": { "type": "string" },
+        "totalContacts": { "type": "number" },
+        "totalAssigned": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["callingDate", "status"]
+    },
+    "assignments": {
+      "title": "Assignment",
+      "description": "Distributed contact assignment to a caller",
+      "properties": {
+        "contactId": { "type": "string" },
+        "callerId": { "type": "string" },
+        "teamId": { "type": "string" },
+        "callingDate": { "type": "string" },
+        "status": { "type": "string" },
+        "assignedAt": { "type": "string" }
+      },
+      "required": ["contactId", "callerId", "callingDate", "status"]
+    },
+    "callAttempts": {
+      "title": "Call Attempt",
+      "description": "Permanent call attempt and feedback history",
+      "properties": {
+        "contactId": { "type": "string" },
+        "callerId": { "type": "string" },
+        "assignmentId": { "type": "string" },
+        "outcome": { "type": "string" },
+        "notes": { "type": "string" },
+        "calledAt": { "type": "string" }
+      },
+      "required": ["contactId", "callerId", "outcome", "calledAt"]
+    },
+    "reassignments": {
+      "title": "Reassignment",
+      "description": "History of reassigning pending contacts when caller is unavailable",
+      "properties": {
+        "assignmentId": { "type": "string" },
+        "fromCallerId": { "type": "string" },
+        "toCallerId": { "type": "string" },
+        "reason": { "type": "string" },
+        "reassignedAt": { "type": "string" }
+      },
+      "required": ["assignmentId", "fromCallerId", "toCallerId", "reassignedAt"]
+    },
+    "auditLogs": {
+      "title": "Audit Log",
+      "description": "Action logs for administrative operations",
+      "properties": {
+        "userId": { "type": "string" },
+        "action": { "type": "string" },
+        "entity": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["action", "createdAt"]
+    }
+  }
+}

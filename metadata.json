@@ -1,0 +1,6 @@
+{
+  "name": "Call Center Contact Distribution & Feedback System",
+  "description": "A web-based platform to manage daily call-center activities, Excel contact imports, fair distribution among callers, WhatsApp assignment generation, call feedback logging, reassignments, and multi-sheet Excel reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
