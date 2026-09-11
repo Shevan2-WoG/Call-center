@@ -155,14 +155,14 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Excel Upload & Management Hero Card */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+            <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-[#6c28f5]" />
               Contact Import Module (Excel / .xlsx, .xls)
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
               Upload spreadsheets, validate columns, normalize phone numbers, and filter duplicates.
             </p>
           </div>
@@ -174,7 +174,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 resetManualForm();
                 setShowAddModal(true);
               }}
-              className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-[#6c28f5] hover:bg-[#5816d6] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
               Add Single Contact
@@ -182,9 +182,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             <button
               type="button"
               onClick={downloadExcelTemplate}
-              className="px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl border border-[#efe8fc] bg-white hover:bg-[#f8f6ff] text-[#1e1b4b] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <Download className="w-3.5 h-3.5 text-slate-600" />
+              <Download className="w-3.5 h-3.5 text-[#6c28f5]" />
               Excel Template
             </button>
           </div>
@@ -192,15 +192,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
         <div className="p-5">
           {importSuccessMsg && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
+            <div className="mb-4 p-3.5 bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#15803d]">
+                <CheckCircle className="w-4 h-4 text-[#88d600]" />
                 {importSuccessMsg}
               </div>
               <button
                 type="button"
                 onClick={() => setImportSuccessMsg(null)}
-                className="text-xs text-emerald-700 hover:text-emerald-900"
+                className="text-xs text-[#15803d] hover:underline font-semibold"
               >
                 Dismiss
               </button>
@@ -210,40 +210,48 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
           {/* Upload Dropzone */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-xl p-6 text-center cursor-pointer bg-slate-50/60 hover:bg-emerald-50/20 transition-all"
+            className="border-2 border-dashed border-[#d8cbff] hover:border-[#6c28f5] rounded-3xl p-7 text-center cursor-pointer bg-[#faf8ff] hover:bg-[#f3efff] transition-all group"
           >
             <input
               ref={fileInputRef}
               type="file"
-              accept=".xlsx, .xls"
+              accept=".xlsx, .xls, .csv"
               onChange={handleFileUpload}
               className="hidden"
             />
-            <div className="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 mb-3">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-[#f3efff] flex items-center justify-center text-[#6c28f5] mb-3 group-hover:scale-105 transition-transform shadow-xs">
               {isParsing ? (
-                <RefreshCw className="w-6 h-6 animate-spin text-emerald-600" />
+                <RefreshCw className="w-7 h-7 animate-spin text-[#6c28f5]" />
               ) : (
-                <Upload className="w-6 h-6" />
+                <Upload className="w-7 h-7" />
               )}
             </div>
-            <p className="text-sm font-semibold text-slate-900">
-              {isParsing ? 'Validating Excel Sheet...' : 'Click to Upload Excel Contact List'}
+            <p className="text-sm font-black text-[#1e1b4b]">
+              {isParsing ? 'Intelligently Processing Excel...' : 'Click to Upload Any Excel Contact Roster'}
             </p>
-            <p className="text-xs text-slate-500 mt-1">
-              Supports .xlsx and .xls formats (Columns: Name, Phone Number, Location, Category, Notes)
+            <p className="text-xs text-[#7c7896] mt-1 max-w-xl mx-auto font-medium leading-relaxed">
+              Universal Excel Parser: Accepts any spreadsheet layout, column names, headerless rows, or phone formats (local, international, with dashes or spaces) with auto-normalization.
             </p>
           </div>
 
           {/* Import Preview Modal / Container if parsed */}
           {parseResult && (
-            <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-5">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200">
+            <div className="mt-6 bg-[#f8f6ff] border border-[#efe8fc] rounded-3xl p-5 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#efe8fc]">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    Import Validation Summary
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Total rows processed: {parseResult.totalRows}
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-[#1e1b4b]">
+                      Excel Import Ready
+                    </h3>
+                    {parseResult.invalid.length === 0 && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#88d600]/15 text-[#629c00] flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-[#88d600]" />
+                        100% Parsed Successfully
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
+                    Found {parseResult.valid.length} ready contacts from {parseResult.totalRows} sheet rows.
                   </p>
                 </div>
 
@@ -251,7 +259,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   <button
                     type="button"
                     onClick={() => setParseResult(null)}
-                    className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-200 rounded-md transition-colors"
+                    className="px-3.5 py-1.5 text-xs text-[#7c7896] hover:text-[#1e1b4b] rounded-xl transition-colors font-semibold"
                   >
                     Cancel
                   </button>
@@ -259,12 +267,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     type="button"
                     disabled={parseResult.valid.length === 0 || isSubmittingImport}
                     onClick={handleConfirmImport}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                    className="px-4 py-2 bg-[#6c28f5] hover:bg-[#5816d6] disabled:bg-slate-300 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer transition-all"
                   >
                     <Check className="w-4 h-4" />
                     {isSubmittingImport
                       ? 'Saving to Database...'
-                      : `Confirm & Save ${parseResult.valid.length} Valid Contacts`}
+                      : `Confirm & Import ${parseResult.valid.length} Contacts`}
                   </button>
                 </div>
               </div>
@@ -274,70 +282,76 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setPreviewTab('valid')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                     previewTab === 'valid'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-200'
+                      ? 'bg-[#6c28f5] text-white shadow-xs'
+                      : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
                   }`}
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
-                  Valid ({parseResult.valid.length})
+                  Ready to Import ({parseResult.valid.length})
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab('invalid')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                    previewTab === 'invalid'
-                      ? 'bg-red-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-200'
-                  }`}
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  Invalid ({parseResult.invalid.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab('duplicates')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                    previewTab === 'duplicates'
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white text-slate-700 border border-slate-200'
-                  }`}
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  Duplicates ({parseResult.duplicates.length})
-                </button>
+
+                {parseResult.duplicates.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('duplicates')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      previewTab === 'duplicates'
+                        ? 'bg-[#ffb800] text-white shadow-xs'
+                        : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                    }`}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    Deduplicated ({parseResult.duplicates.length})
+                  </button>
+                )}
+
+                {parseResult.invalid.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('invalid')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                      previewTab === 'invalid'
+                        ? 'bg-[#ff2a85] text-white shadow-xs'
+                        : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                    }`}
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    Invalid ({parseResult.invalid.length})
+                  </button>
+                )}
               </div>
 
               {/* Preview Table */}
-              <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto max-h-60">
+              <div className="bg-white rounded-2xl border border-[#efe8fc] overflow-x-auto max-h-60">
                 {previewTab === 'valid' && (
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-100/75 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+                    <thead className="bg-[#f8f6ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px]">
                       <tr>
-                        <th className="p-2.5">Name</th>
-                        <th className="p-2.5">Original Phone</th>
-                        <th className="p-2.5">Normalized Phone</th>
-                        <th className="p-2.5">Location</th>
-                        <th className="p-2.5">Category</th>
-                        <th className="p-2.5">Notes</th>
+                        <th className="p-3">Name</th>
+                        <th className="p-3">Original Phone</th>
+                        <th className="p-3">Normalized Phone</th>
+                        <th className="p-3">Location</th>
+                        <th className="p-3">Category</th>
+                        <th className="p-3">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-[#efe8fc]">
                       {parseResult.valid.map((c, i) => (
-                        <tr key={i} className="hover:bg-slate-50">
-                          <td className="p-2.5 font-medium text-slate-900">{c.name}</td>
-                          <td className="p-2.5 font-mono text-slate-600">{c.phone}</td>
-                          <td className="p-2.5 font-mono text-emerald-700 font-medium">
+                        <tr key={i} className="hover:bg-[#faf8ff]">
+                          <td className="p-3 font-bold text-[#1e1b4b]">{c.name}</td>
+                          <td className="p-3 font-mono text-[#7c7896]">{c.phone}</td>
+                          <td className="p-3 font-mono text-[#6c28f5] font-bold">
                             {c.normalizedPhone}
                           </td>
-                          <td className="p-2.5 text-slate-600">{c.location}</td>
-                          <td className="p-2.5">
-                            <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                          <td className="p-3 text-[#7c7896]">{c.location}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] font-bold text-[11px]">
                               {c.category}
                             </span>
                           </td>
-                          <td className="p-2.5 text-slate-500 truncate max-w-xs">{c.notes || '-'}</td>
+                          <td className="p-3 text-[#7c7896] truncate max-w-xs">{c.notes || '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -346,26 +360,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
                 {previewTab === 'invalid' && (
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-red-50 border-b border-red-100 text-red-700 uppercase font-semibold">
+                    <thead className="bg-[#fff1f2] border-b border-[#fecdd3] text-[#be123c] uppercase font-bold text-[11px]">
                       <tr>
-                        <th className="p-2.5">Row #</th>
-                        <th className="p-2.5">Reason</th>
-                        <th className="p-2.5">Raw Data Sample</th>
+                        <th className="p-3">Row #</th>
+                        <th className="p-3">Reason</th>
+                        <th className="p-3">Raw Data Sample</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-red-100">
+                    <tbody className="divide-y divide-[#ffe4e6]">
                       {parseResult.invalid.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-4 text-center text-slate-400">
+                          <td colSpan={3} className="p-4 text-center text-[#7c7896]">
                             No invalid rows detected!
                           </td>
                         </tr>
                       ) : (
                         parseResult.invalid.map((item, i) => (
-                          <tr key={i} className="hover:bg-red-50/50">
-                            <td className="p-2.5 font-semibold text-slate-700">Row {item.row}</td>
-                            <td className="p-2.5 font-semibold text-red-600">{item.reason}</td>
-                            <td className="p-2.5 font-mono text-[11px] text-slate-600">
+                          <tr key={i} className="hover:bg-[#fff1f2]/50">
+                            <td className="p-3 font-bold text-[#1e1b4b]">Row {item.row}</td>
+                            <td className="p-3 font-bold text-[#ff2a85]">{item.reason}</td>
+                            <td className="p-3 font-mono text-[11px] text-[#7c7896]">
                               {JSON.stringify(item.data)}
                             </td>
                           </tr>
@@ -377,26 +391,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
                 {previewTab === 'duplicates' && (
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-amber-50 border-b border-amber-100 text-amber-800 uppercase font-semibold">
+                    <thead className="bg-[#fffbeb] border-b border-[#fef3c7] text-[#92400e] uppercase font-bold text-[11px]">
                       <tr>
-                        <th className="p-2.5">Row #</th>
-                        <th className="p-2.5">Issue</th>
-                        <th className="p-2.5">Data</th>
+                        <th className="p-3">Row #</th>
+                        <th className="p-3">Issue</th>
+                        <th className="p-3">Data</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-amber-100">
+                    <tbody className="divide-y divide-[#fef3c7]">
                       {parseResult.duplicates.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-4 text-center text-slate-400">
+                          <td colSpan={3} className="p-4 text-center text-[#7c7896]">
                             No duplicates detected.
                           </td>
                         </tr>
                       ) : (
                         parseResult.duplicates.map((item, i) => (
-                          <tr key={i} className="hover:bg-amber-50/50">
-                            <td className="p-2.5 font-semibold text-slate-700">Row {item.row}</td>
-                            <td className="p-2.5 font-semibold text-amber-700">{item.reason}</td>
-                            <td className="p-2.5 font-mono text-[11px] text-slate-600">
+                          <tr key={i} className="hover:bg-[#fffbeb]/50">
+                            <td className="p-3 font-bold text-[#1e1b4b]">Row {item.row}</td>
+                            <td className="p-3 font-bold text-[#b47800]">{item.reason}</td>
+                            <td className="p-3 font-mono text-[11px] text-[#7c7896]">
                               {JSON.stringify(item.data)}
                             </td>
                           </tr>
@@ -412,12 +426,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       </div>
 
       {/* Existing Contacts Database Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
         {/* Table Controls */}
-        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="p-4 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-sm text-slate-900">Database Contacts</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700 font-semibold">
+            <span className="font-black text-sm text-[#1e1b4b]">Database Contacts</span>
+            <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] font-bold border border-[#e8e1f9]">
               {filteredContacts.length} of {contacts.length}
             </span>
           </div>
@@ -425,24 +439,24 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Search */}
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#7c7896]" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search name, phone, location..."
-                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg outline-none focus:border-emerald-500 w-48 sm:w-60"
+                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] w-48 sm:w-60 font-medium text-[#1e1b4b]"
               />
             </div>
 
             {/* Category Filter */}
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs">
-              <Filter className="w-3 h-3 text-slate-400" />
+            <div className="flex items-center gap-1 bg-white border border-[#efe8fc] rounded-xl px-2 py-1.5 text-xs">
+              <Filter className="w-3 h-3 text-[#7c7896]" />
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
                 aria-label="Filter by Category"
-                className="bg-transparent outline-none cursor-pointer text-slate-700 font-medium"
+                className="bg-transparent outline-none cursor-pointer text-[#1e1b4b] font-semibold"
               >
                 <option value="all">All Categories</option>
                 {categories.map((cat) => (
@@ -458,7 +472,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               aria-label="Filter by Status"
-              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none cursor-pointer text-slate-700 font-medium"
+              className="bg-white border border-[#efe8fc] rounded-xl px-2.5 py-1.5 text-xs outline-none cursor-pointer text-[#1e1b4b] font-semibold"
             >
               <option value="all">All Statuses</option>
               <option value="unassigned">Unassigned</option>
@@ -470,7 +484,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               type="button"
               onClick={onRefresh}
               title="Refresh database records"
-              className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
+              className="p-1.5 rounded-xl border border-[#efe8fc] hover:bg-[#f3efff] text-[#6c28f5] transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -480,7 +494,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
         {/* Contacts Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
+            <thead className="bg-[#f8f6ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px]">
               <tr>
                 <th className="p-3">#</th>
                 <th className="p-3">Name</th>
@@ -493,16 +507,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 {onDeleteContact && <th className="p-3 text-right">Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[#efe8fc]">
               {filteredContacts.length === 0 ? (
                 <tr>
                   <td colSpan={onDeleteContact ? 9 : 8} className="p-12 text-center">
                     <div className="max-w-md mx-auto space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                      <div className="w-12 h-12 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center mx-auto shadow-xs">
                         <UserPlus className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-800">No Contacts in Database</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm font-black text-[#1e1b4b]">No Contacts in Database</p>
+                      <p className="text-xs text-[#7c7896] font-medium">
                         The contacts database is completely empty. Upload your Excel contact roster or add individual contacts to begin.
                       </p>
                       <div className="flex items-center justify-center gap-3 pt-2">
@@ -512,7 +526,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                             resetManualForm();
                             setShowAddModal(true);
                           }}
-                          className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl bg-[#6c28f5] hover:bg-[#5816d6] text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 transition-all cursor-pointer"
                         >
                           <UserPlus className="w-3.5 h-3.5" />
                           Add First Contact
@@ -520,9 +534,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
-                          className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl border border-[#efe8fc] hover:bg-[#f3efff] text-[#1e1b4b] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                         >
-                          <Upload className="w-3.5 h-3.5" />
+                          <Upload className="w-3.5 h-3.5 text-[#6c28f5]" />
                           Upload Excel (.xlsx)
                         </button>
                       </div>
@@ -532,44 +546,44 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               ) : (
                 filteredContacts.map((contact, index) => {
                   const statusColors: Record<string, string> = {
-                    unassigned: 'bg-blue-50 text-blue-700 border-blue-200',
-                    assigned: 'bg-amber-50 text-amber-700 border-amber-200',
-                    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                    pending: 'bg-purple-50 text-purple-700 border-purple-200',
+                    unassigned: 'bg-[#ffb800]/15 text-[#b47800] border-[#ffb800]/30',
+                    assigned: 'bg-[#6c28f5]/15 text-[#6c28f5] border-[#6c28f5]/30',
+                    completed: 'bg-[#88d600]/15 text-[#629c00] border-[#88d600]/30',
+                    pending: 'bg-[#ff2a85]/15 text-[#ff2a85] border-[#ff2a85]/30',
                   };
                   return (
-                    <tr key={contact.id} className="hover:bg-slate-50/75 transition-colors">
-                      <td className="p-3 text-slate-400 font-mono">{index + 1}</td>
-                      <td className="p-3 font-semibold text-slate-900">{contact.name}</td>
-                      <td className="p-3 font-mono text-slate-700 flex items-center gap-1.5">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                    <tr key={contact.id} className="hover:bg-[#faf8ff] transition-colors">
+                      <td className="p-3 text-[#7c7896] font-mono">{index + 1}</td>
+                      <td className="p-3 font-bold text-[#1e1b4b]">{contact.name}</td>
+                      <td className="p-3 font-mono text-[#6c28f5] font-bold flex items-center gap-1.5">
+                        <Phone className="w-3 h-3 text-[#6c28f5]" />
                         {contact.normalizedPhone || contact.phone}
                       </td>
-                      <td className="p-3 text-slate-600">
+                      <td className="p-3 text-[#7c7896]">
                         <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-slate-400" />
+                          <MapPin className="w-3 h-3 text-[#7c7896]" />
                           {contact.location || 'Unspecified'}
                         </span>
                       </td>
                       <td className="p-3">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium inline-flex items-center gap-1">
-                          <Tag className="w-2.5 h-2.5 text-slate-400" />
+                        <span className="px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] text-[11px] font-bold inline-flex items-center gap-1 border border-[#e8e1f9]">
+                          <Tag className="w-2.5 h-2.5 text-[#6c28f5]" />
                           {contact.category || 'General'}
                         </span>
                       </td>
-                      <td className="p-3 text-slate-500 max-w-xs truncate" title={contact.notes}>
+                      <td className="p-3 text-[#7c7896] max-w-xs truncate" title={contact.notes}>
                         {contact.notes || '-'}
                       </td>
                       <td className="p-3">
                         <span
-                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                            statusColors[contact.status] || 'bg-slate-100 text-slate-700'
+                          className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                            statusColors[contact.status] || 'bg-[#f3efff] text-[#6c28f5]'
                           }`}
                         >
                           {contact.status}
                         </span>
                       </td>
-                      <td className="p-3 text-slate-400 text-[11px] truncate max-w-xs">
+                      <td className="p-3 text-[#7c7896] text-[11px] truncate max-w-xs">
                         {contact.source || 'Direct'}
                       </td>
                       {onDeleteContact && (
@@ -582,7 +596,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                               }
                             }}
                             title="Delete Contact"
-                            className="p-1 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg text-[#7c7896] hover:text-[#ff2a85] hover:bg-[#fff1f2] transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -599,28 +613,28 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
       {/* Manual Add Contact Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 relative">
+        <div className="fixed inset-0 z-50 bg-[#1e1b4b]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#efe8fc] relative">
             <button
               type="button"
               onClick={resetManualForm}
-              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-1.5 rounded-xl text-[#7c7896] hover:text-[#1e1b4b] hover:bg-[#f3efff] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center shadow-xs">
                 <UserPlus className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900">Add New Contact</h3>
-                <p className="text-xs text-slate-500">Enter contact details for calling operations</p>
+                <h3 className="text-base font-black text-[#1e1b4b]">Add New Contact</h3>
+                <p className="text-xs text-[#7c7896] font-medium">Enter contact details for calling operations</p>
               </div>
             </div>
 
             {modalError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+              <div className="mb-4 p-3 bg-[#fff1f2] border border-[#fecdd3] text-[#ff2a85] rounded-2xl text-xs flex items-center gap-2 font-semibold">
                 <AlertTriangle className="w-4 h-4 shrink-0" />
                 {modalError}
               </div>
@@ -628,8 +642,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
             <form onSubmit={handleManualSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Full Name <span className="text-red-500">*</span>
+                <label className="block font-bold text-[#1e1b4b] mb-1">
+                  Full Name <span className="text-[#ff2a85]">*</span>
                 </label>
                 <input
                   type="text"
@@ -637,13 +651,13 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   onChange={(e) => setManualName(e.target.value)}
                   placeholder="e.g. John Mukasa"
                   required
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Phone Number <span className="text-red-500">*</span>
+                <label className="block font-bold text-[#1e1b4b] mb-1">
+                  Phone Number <span className="text-[#ff2a85]">*</span>
                 </label>
                 <input
                   type="text"
@@ -651,57 +665,57 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   onChange={(e) => setManualPhone(e.target.value)}
                   placeholder="e.g. +256701234567 or 0701234567"
                   required
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800 font-mono"
+                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Numbers will be normalized to international E.164 format.</p>
+                <p className="text-[11px] text-[#7c7896] mt-1 font-medium">Numbers will be normalized to international E.164 format.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Location / District</label>
+                  <label className="block font-bold text-[#1e1b4b] mb-1">Location / District</label>
                   <input
                     type="text"
                     value={manualLocation}
                     onChange={(e) => setManualLocation(e.target.value)}
                     placeholder="e.g. Kampala"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Category</label>
+                  <label className="block font-bold text-[#1e1b4b] mb-1">Category</label>
                   <input
                     type="text"
                     value={manualCategory}
                     onChange={(e) => setManualCategory(e.target.value)}
                     placeholder="e.g. General, VIP"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800"
+                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Notes (Optional)</label>
+                <label className="block font-bold text-[#1e1b4b] mb-1">Notes (Optional)</label>
                 <textarea
                   rows={2}
                   value={manualNotes}
                   onChange={(e) => setManualNotes(e.target.value)}
                   placeholder="Context, background, preferred calling time..."
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:bg-white text-slate-800 resize-none"
+                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] resize-none font-medium transition-all"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#efe8fc]">
                 <button
                   type="button"
                   onClick={resetManualForm}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold cursor-pointer"
+                  className="px-4 py-2 rounded-xl text-[#7c7896] hover:bg-[#f8f6ff] font-bold cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSavingManual}
-                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-1.5 shadow-xs cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-[#6c28f5] hover:bg-[#5816d6] text-white font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer disabled:opacity-50 transition-all"
                 >
                   {isSavingManual ? (
                     <>

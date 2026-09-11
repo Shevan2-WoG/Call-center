@@ -135,12 +135,14 @@ export async function saveContactsBatch(newContacts: Omit<Contact, 'id' | 'creat
   setLocal(STORAGE_KEYS.CONTACTS, updated);
 
   try {
-    const batch = writeBatch(db);
-    // Write up to 100 in batch for safety
-    created.slice(0, 100).forEach(contact => {
-      batch.set(doc(db, 'contacts', contact.id), contact);
-    });
-    await batch.commit();
+    // Write in chunks of 400 to comply with Firestore batch limits
+    for (let i = 0; i < created.length; i += 400) {
+      const batch = writeBatch(db);
+      created.slice(i, i + 400).forEach(contact => {
+        batch.set(doc(db, 'contacts', contact.id), contact);
+      });
+      await batch.commit();
+    }
   } catch (err) {
     console.warn('Firestore batch save contacts error', err);
   }

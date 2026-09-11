@@ -9,44 +9,153 @@ export interface ParseExcelResult {
 }
 
 /**
- * Normalizes phone numbers:
- * - strips whitespace, dashes, parentheses
- * - handles + or leading 00
- * - normalizes e.g. 07... to +2567... if 10 digits starting with 07
+ * Safely converts any cell value to string, handling:
+ * - null / undefined
+ * - large numbers and integers without scientific notation
+ * - string scientific notation (e.g. 2.56701E+11)
+ * - floating point decimals (e.g. 701234567.0)
  */
-export function normalizePhoneNumber(rawPhone: any, defaultCountryCode = '256'): { normalized: string; isValid: boolean; error?: string } {
-  if (!rawPhone) {
-    return { normalized: '', isValid: false, error: 'Phone number is empty' };
+export function cellToString(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'number') {
+    if (!Number.isFinite(val)) return '';
+    // If integer or near-integer, format as big integer string without scientific notation
+    if (Math.abs(val - Math.round(val)) < 1e-4) {
+      return BigInt(Math.round(val)).toString();
+    }
+    return val.toLocaleString('fullwide', { useGrouping: false });
   }
-
-  let cleaned = String(rawPhone).trim().replace(/[\s\-\(\)\.]/g, '');
-
-  if (cleaned.startsWith('+')) {
-    cleaned = cleaned.substring(1);
-  } else if (cleaned.startsWith('00')) {
-    cleaned = cleaned.substring(2);
+  let str = String(val).trim();
+  // Handle string scientific notation like "2.56701E+11" or "2.56701e11"
+  if (/^[+\-]?\d+(\.\d+)?[eE][+\-]?\d+$/.test(str)) {
+    const num = Number(str);
+    if (!isNaN(num) && Number.isFinite(num)) {
+      str = BigInt(Math.round(num)).toString();
+    }
   }
-
-  // If local format like 0700000000 (10 digits starting with 0)
-  if (cleaned.startsWith('0') && cleaned.length === 10) {
-    cleaned = defaultCountryCode + cleaned.substring(1);
+  // Strip trailing .0 if present from Excel float conversion
+  if (/^\d+\.0$/.test(str)) {
+    str = str.replace(/\.0$/, '');
   }
-
-  // Must contain only digits
-  if (!/^\d+$/.test(cleaned)) {
-    return { normalized: cleaned, isValid: false, error: 'Phone contains invalid characters' };
-  }
-
-  // Must be between 8 and 15 digits (E.164 standard)
-  if (cleaned.length < 8 || cleaned.length > 15) {
-    return { normalized: cleaned, isValid: false, error: `Invalid phone length (${cleaned.length} digits)` };
-  }
-
-  return { normalized: '+' + cleaned, isValid: true };
+  return str;
 }
 
 /**
- * Parses an uploaded .xlsx or .xls file
+ * Universal Phone Number Normalizer & Cleaner:
+ * - Handles numeric inputs from Excel, floating points, scientific notation
+ * - Strips whitespace, dashes, parentheses, dots
+ * - Auto-corrects common OCR/typing errors (letter 'O' or 'o' in place of '0')
+ * - Recognizes local Ugandan/East African formats:
+ *     - 10 digits starting with 0: 0700000000 -> +256700000000
+ *     - 9 digits starting with 7, 3, 4 (Excel stripped leading 0): 701234567 -> +256701234567
+ *     - 12 digits starting with 256: 256701234567 -> +256701234567
+ * - Recognizes standard international formats (+..., 00...)
+ * - Extracts valid phone digits even if surrounded by text ("Airtel: 0701234567")
+ * - Handles multiple numbers in one cell (takes primary, records secondary)
+ */
+export function normalizePhoneNumber(
+  rawPhone: any,
+  defaultCountryCode = '256'
+): { normalized: string; isValid: boolean; error?: string; secondaryPhone?: string } {
+  const rawStr = cellToString(rawPhone);
+  if (!rawStr) {
+    return { normalized: '', isValid: false, error: 'Phone number is empty' };
+  }
+
+  // Check if multiple phone numbers exist in the string (separated by /, ,, ;, &, or, and)
+  const parts = rawStr.split(/[\/,\;\&|]|\bor\b|\band\b/i).map(s => s.trim()).filter(Boolean);
+
+  const cleanPhoneString = (input: string): string => {
+    // Replace typos where letter O or o was typed instead of 0 in digit context
+    let s = input.replace(/([0-9+])o([0-9])/gi, '$10$2').replace(/^o([0-9])/gi, '0$1');
+    // Remove formatting characters
+    s = s.replace(/[\s\-\(\)\.]/g, '');
+    return s;
+  };
+
+  const primaryCandidate = cleanPhoneString(parts[0] || rawStr);
+  const secondaryCandidate = parts.length > 1 ? cleanPhoneString(parts[1]) : undefined;
+
+  const processDigits = (cand: string): string => {
+    let s = cand;
+    if (s.startsWith('+')) {
+      s = '+' + s.substring(1).replace(/\D/g, '');
+    } else if (s.startsWith('00')) {
+      s = '+' + s.substring(2).replace(/\D/g, '');
+    } else {
+      const digits = s.replace(/\D/g, '');
+      // If local format like 0700000000 (10 digits starting with 0)
+      if (digits.startsWith('0') && digits.length === 10) {
+        s = '+' + defaultCountryCode + digits.substring(1);
+      }
+      // If 9 digits starting with 7, 3, 4 (Excel stripped leading 0!)
+      else if (digits.length === 9 && /^[734]/.test(digits)) {
+        s = '+' + defaultCountryCode + digits;
+      }
+      // If 12 digits starting with country code 256
+      else if (digits.length === 12 && digits.startsWith('25')) {
+        s = '+' + digits;
+      }
+      // If 10-15 digits already with country code
+      else if (digits.length >= 10 && (digits.startsWith('1') || digits.startsWith('234') || digits.startsWith('254') || digits.startsWith('255') || digits.startsWith('250') || digits.startsWith('44'))) {
+        s = '+' + digits;
+      }
+      // If starts with 0 and 8+ digits
+      else if (digits.startsWith('0') && digits.length >= 8) {
+        s = '+' + defaultCountryCode + digits.substring(1);
+      }
+      // If 8 to 15 digits
+      else if (digits.length >= 8 && digits.length <= 15) {
+        s = '+' + (digits.startsWith(defaultCountryCode) ? digits : defaultCountryCode + digits);
+      }
+      // Fallback for short local lines (5+ digits)
+      else if (digits.length >= 5) {
+        s = '+' + (digits.startsWith(defaultCountryCode) ? digits : defaultCountryCode + digits);
+      } else {
+        s = digits;
+      }
+    }
+    return s;
+  };
+
+  let normalizedPrimary = processDigits(primaryCandidate);
+  const normalizedSecondary = secondaryCandidate ? processDigits(secondaryCandidate) : undefined;
+
+  // If normalizedPrimary still lacks digits, search for any digit sequence in rawStr
+  if (normalizedPrimary.replace(/\D/g, '').length < 5) {
+    const match = rawStr.match(/\d{5,15}/);
+    if (match) {
+      normalizedPrimary = processDigits(match[0]);
+    }
+  }
+
+  const digitCount = normalizedPrimary.replace(/\D/g, '').length;
+  if (digitCount < 5) {
+    return {
+      normalized: normalizedPrimary,
+      isValid: false,
+      error: 'Phone number has insufficient digits',
+    };
+  }
+
+  return {
+    normalized: normalizedPrimary,
+    isValid: true,
+    secondaryPhone: normalizedSecondary,
+  };
+}
+
+/**
+ * Universal Intelligent Contact Excel Parser:
+ * - Scans all sheets to find data
+ * - Auto-detects header row (row 1, 2, 3, 4, 5...) or operates headerless
+ * - Handles ANY column naming variation or casing (Name, Full Name, Client, FName+LName, Tel, Mobile, etc.)
+ * - Auto-detects columns by content frequency if headers are missing or unusual
+ * - Silently skips empty rows (never creates false "invalid" errors)
+ * - Auto-generates fallback name for nameless rows (e.g. "Contact +256...")
+ * - Auto-rescues phone numbers from any column in the row
+ * - Preserves extra columns (email, company, notes) inside contact notes
+ * - Includes existing contacts ready for calling batches
  */
 export async function parseContactExcel(
   file: File,
@@ -54,69 +163,346 @@ export async function parseContactExcel(
 ): Promise<ParseExcelResult> {
   const data = await file.arrayBuffer();
   const workbook = XLSX.read(data, { type: 'array' });
-  const firstSheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[firstSheetName];
 
-  // Convert to JSON array of objects
-  const rawRows: any[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+  // Find sheet with the most non-empty rows
+  let bestSheetName = workbook.SheetNames[0];
+  let bestRows: any[][] = [];
+  let maxDataCount = -1;
+
+  for (const sheetName of workbook.SheetNames) {
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) continue;
+    const grid: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    const nonEmptyCount = grid.filter(r => r && r.some(c => cellToString(c).length > 0)).length;
+    if (nonEmptyCount > maxDataCount) {
+      maxDataCount = nonEmptyCount;
+      bestSheetName = sheetName;
+      bestRows = grid;
+    }
+  }
+
+  if (bestRows.length === 0) {
+    return { valid: [], invalid: [], duplicates: [], totalRows: 0 };
+  }
+
+  // Keywords definitions
+  const matchesKeyword = (str: string, keywords: string[]): boolean => {
+    const lower = str.toLowerCase().trim();
+    return keywords.some(k => lower === k || lower.includes(k));
+  };
+
+  const NAME_KEYWORDS = [
+    'full name', 'contact name', 'customer name', 'client name', 'student name', 'member name',
+    'participant name', 'person name', 'lead name', 'first name', 'last name', 'surname',
+    'given name', 'other name', 'names', 'name', 'nom', 'nombre', 'client', 'customer',
+    'student', 'member', 'person', 'lead', 'applicant', 'patient', 'attendee', 'caller', 'user'
+  ];
+
+  const PHONE_KEYWORDS = [
+    'phone number', 'phone no', 'phone_no', 'phone_number', 'phonenumber', 'mobile number',
+    'mobile no', 'mobile_no', 'mobile_number', 'telephone number', 'telephone no', 'tel no',
+    'tel_no', 'whatsapp number', 'whatsapp no', 'contact number', 'contact no', 'cell number',
+    'cell no', 'cellphone', 'cellular', 'msisdn', 'phone', 'mobile', 'telephone', 'tel',
+    'cell', 'whatsapp', 'number', 'no.', 'digits', 'line', 'dial', 'calling'
+  ];
+
+  const LOCATION_KEYWORDS = [
+    'location', 'district', 'city', 'town', 'address', 'region', 'area', 'village',
+    'subcounty', 'country', 'place', 'residence', 'zone', 'parish'
+  ];
+
+  const CATEGORY_KEYWORDS = [
+    'category', 'type', 'segment', 'group', 'role', 'tag', 'class', 'status',
+    'grade', 'department', 'batch', 'cohort', 'tier'
+  ];
+
+  const NOTES_KEYWORDS = [
+    'notes', 'note', 'remarks', 'remark', 'comment', 'comments', 'description',
+    'details', 'info', 'reason', 'feedback', 'message', 'background', 'preference'
+  ];
+
+  // Detect header row by scoring top 15 rows
+  let headerRowIndex = -1;
+  let bestScore = 0;
+
+  const rowsToScan = Math.min(15, bestRows.length);
+  for (let r = 0; r < rowsToScan; r++) {
+    const row = bestRows[r];
+    if (!row || row.every(c => !cellToString(c))) continue;
+
+    let rowScore = 0;
+    let hasPhoneLikeNumber = false;
+
+    row.forEach(cell => {
+      const str = cellToString(cell);
+      if (!str) return;
+      const digitsOnly = str.replace(/\D/g, '');
+      if (digitsOnly.length >= 7 && digitsOnly.length <= 15) {
+        hasPhoneLikeNumber = true;
+      }
+      if (matchesKeyword(str, PHONE_KEYWORDS)) rowScore += 10;
+      if (matchesKeyword(str, NAME_KEYWORDS)) rowScore += 10;
+      if (matchesKeyword(str, LOCATION_KEYWORDS)) rowScore += 5;
+      if (matchesKeyword(str, CATEGORY_KEYWORDS)) rowScore += 4;
+      if (matchesKeyword(str, NOTES_KEYWORDS)) rowScore += 4;
+    });
+
+    // If row contains actual phone numbers, it is likely a data row, not a header row
+    if (hasPhoneLikeNumber) {
+      rowScore -= 15;
+    }
+
+    if (rowScore > bestScore && rowScore >= 8) {
+      bestScore = rowScore;
+      headerRowIndex = r;
+    }
+  }
+
+  // Determine column mapping
+  let nameCol = -1;
+  let firstNameCol = -1;
+  let lastNameCol = -1;
+  let phoneCol = -1;
+  let altPhoneCol = -1;
+  let locationCol = -1;
+  let categoryCol = -1;
+  let notesCol = -1;
+  const otherCols: { index: number; label: string }[] = [];
+
+  if (headerRowIndex >= 0) {
+    const headerRow = bestRows[headerRowIndex];
+    headerRow.forEach((cell, c) => {
+      const label = cellToString(cell).trim();
+      const lower = label.toLowerCase();
+      if (!label) return;
+
+      if (matchesKeyword(lower, ['first name', 'fname', 'given name'])) {
+        firstNameCol = c;
+      } else if (matchesKeyword(lower, ['last name', 'lname', 'surname', 'second name'])) {
+        lastNameCol = c;
+      } else if (nameCol === -1 && matchesKeyword(lower, NAME_KEYWORDS)) {
+        nameCol = c;
+      } else if (matchesKeyword(lower, PHONE_KEYWORDS)) {
+        if (phoneCol === -1) {
+          phoneCol = c;
+        } else if (altPhoneCol === -1) {
+          altPhoneCol = c;
+        }
+      } else if (locationCol === -1 && matchesKeyword(lower, LOCATION_KEYWORDS)) {
+        locationCol = c;
+      } else if (categoryCol === -1 && matchesKeyword(lower, CATEGORY_KEYWORDS)) {
+        categoryCol = c;
+      } else if (notesCol === -1 && matchesKeyword(lower, NOTES_KEYWORDS)) {
+        notesCol = c;
+      } else {
+        otherCols.push({ index: c, label });
+      }
+    });
+  }
+
+  const dataStartIndex = headerRowIndex >= 0 ? headerRowIndex + 1 : 0;
+
+  // Fallback: If phone column wasn't detected by header, detect by cell data frequency
+  if (phoneCol === -1) {
+    const colPhoneCounts = new Map<number, number>();
+    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, bestRows.length); r++) {
+      const row = bestRows[r];
+      if (!row) continue;
+      row.forEach((cell, c) => {
+        const str = cellToString(cell).replace(/\D/g, '');
+        if (str.length >= 7 && str.length <= 15) {
+          colPhoneCounts.set(c, (colPhoneCounts.get(c) || 0) + 1);
+        }
+      });
+    }
+    let maxCount = 0;
+    colPhoneCounts.forEach((count, c) => {
+      if (count > maxCount) {
+        maxCount = count;
+        phoneCol = c;
+      }
+    });
+  }
+
+  // Fallback: If name column wasn't detected, detect by text frequency
+  if (nameCol === -1 && firstNameCol === -1) {
+    const colNameCounts = new Map<number, number>();
+    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, bestRows.length); r++) {
+      const row = bestRows[r];
+      if (!row) continue;
+      row.forEach((cell, c) => {
+        if (c === phoneCol || c === altPhoneCol) return;
+        const str = cellToString(cell).trim();
+        // Check for personal name pattern: letters, spaces, 2 to 40 chars, no @ or pure numbers
+        if (/^[A-Za-z\s\.'\-]{2,45}$/.test(str) && !/total|summary|phone|tel/i.test(str)) {
+          colNameCounts.set(c, (colNameCounts.get(c) || 0) + 1);
+        }
+      });
+    }
+    let maxCount = 0;
+    colNameCounts.forEach((count, c) => {
+      if (count > maxCount) {
+        maxCount = count;
+        nameCol = c;
+      }
+    });
+  }
 
   const valid: Omit<Contact, 'id' | 'createdAt' | 'status'>[] = [];
   const invalid: { row: number; data: any; reason: string }[] = [];
   const duplicates: { row: number; data: any; reason: string }[] = [];
-
   const seenInFile = new Set<string>();
 
-  rawRows.forEach((row, index) => {
-    const rowNumber = index + 2; // considering 1-based index + header
+  let actualRowsProcessed = 0;
 
-    // Map column aliases
-    const name = row['Name'] || row['Full Name'] || row['Contact Name'] || row['Customer Name'] || row['name'] || '';
-    const rawPhone = row['Phone Number'] || row['Phone'] || row['Mobile'] || row['Telephone'] || row['Contact'] || row['phone'] || '';
-    const location = row['Location'] || row['City'] || row['Address'] || row['District'] || row['location'] || '';
-    const category = row['Category'] || row['Type'] || row['Segment'] || row['Role'] || row['category'] || 'General';
-    const notes = row['Notes'] || row['Note'] || row['Remarks'] || row['Comment'] || row['notes'] || '';
+  for (let r = dataStartIndex; r < bestRows.length; r++) {
+    const row = bestRows[r];
+    if (!row) continue;
 
-    if (!name || String(name).trim() === '') {
-      invalid.push({ row: rowNumber, data: row, reason: 'Missing Name' });
-      return;
+    // 1. Skip completely empty rows silently (never report empty rows as invalid)
+    const isRowEmpty = row.every(cell => !cellToString(cell));
+    if (isRowEmpty) {
+      continue;
+    }
+
+    actualRowsProcessed++;
+    const rowNumber = r + 1;
+
+    // 2. Extract phone
+    let rawPhone = phoneCol >= 0 ? cellToString(row[phoneCol]) : '';
+    let altPhone = altPhoneCol >= 0 ? cellToString(row[altPhoneCol]) : '';
+
+    // If primary phone cell has no digits, scan other cells in this row
+    if (rawPhone.replace(/\D/g, '').length < 5) {
+      for (let c = 0; c < row.length; c++) {
+        if (c === nameCol || c === firstNameCol || c === lastNameCol) continue;
+        const candidate = cellToString(row[c]);
+        if (candidate.replace(/\D/g, '').length >= 7) {
+          rawPhone = candidate;
+          break;
+        }
+      }
     }
 
     const phoneRes = normalizePhoneNumber(rawPhone);
-    if (!phoneRes.isValid) {
-      invalid.push({ row: rowNumber, data: row, reason: phoneRes.error || 'Invalid phone' });
-      return;
+    let normalizedPhone = phoneRes.isValid ? phoneRes.normalized : '';
+
+    // If still not valid, try finding any digit sequence anywhere in the row
+    if (!normalizedPhone) {
+      for (let c = 0; c < row.length; c++) {
+        const match = cellToString(row[c]).match(/\d{5,15}/);
+        if (match) {
+          const fallbackNorm = normalizePhoneNumber(match[0]);
+          if (fallbackNorm.isValid) {
+            normalizedPhone = fallbackNorm.normalized;
+            rawPhone = match[0];
+            break;
+          }
+        }
+      }
     }
 
-    const normalized = phoneRes.normalized;
-
-    if (seenInFile.has(normalized)) {
-      duplicates.push({ row: rowNumber, data: row, reason: 'Duplicate phone in uploaded file' });
-      return;
+    // If completely no phone could be identified:
+    if (!normalizedPhone) {
+      const rowText = row.map(cellToString).filter(Boolean).join(' ');
+      // If it looks like a decorative separator, notes banner or summary, skip silently
+      if (rowText.length < 3 || /total|summary|sheet|report|page/i.test(rowText)) {
+        continue;
+      }
+      invalid.push({
+        row: rowNumber,
+        data: row,
+        reason: 'No valid phone number found in row',
+      });
+      continue;
     }
 
-    if (existingPhones.has(normalized)) {
-      duplicates.push({ row: rowNumber, data: row, reason: 'Contact already exists in database' });
-      return;
+    // 3. Extract Name
+    let name = '';
+    if (firstNameCol >= 0 && lastNameCol >= 0) {
+      const fn = cellToString(row[firstNameCol]);
+      const ln = cellToString(row[lastNameCol]);
+      name = `${fn} ${ln}`.trim();
+    }
+    if (!name && nameCol >= 0) {
+      name = cellToString(row[nameCol]);
+    }
+    // If name is still blank, scan other text cells
+    if (!name) {
+      for (let c = 0; c < row.length; c++) {
+        if (c === phoneCol || c === altPhoneCol || c === locationCol) continue;
+        const text = cellToString(row[c]);
+        if (/^[A-Za-z\s\.'\-]{2,40}$/.test(text)) {
+          name = text;
+          break;
+        }
+      }
+    }
+    // Universal resilience: If name is still missing, auto-generate fallback so row is NEVER invalid!
+    if (!name) {
+      name = `Contact ${normalizedPhone}`;
     }
 
-    seenInFile.add(normalized);
+    // 4. Extract Location
+    let location = locationCol >= 0 ? cellToString(row[locationCol]) : '';
+    if (!location) {
+      location = 'Unspecified';
+    }
+
+    // 5. Extract Category
+    let category = categoryCol >= 0 ? cellToString(row[categoryCol]) : '';
+    if (!category) {
+      category = 'General';
+    }
+
+    // 6. Extract Notes and merge extra columns
+    let notes = notesCol >= 0 ? cellToString(row[notesCol]) : '';
+    if (phoneRes.secondaryPhone) {
+      notes = notes ? `${notes} | Alt Phone: ${phoneRes.secondaryPhone}` : `Alt Phone: ${phoneRes.secondaryPhone}`;
+    } else if (altPhone && altPhone !== rawPhone) {
+      notes = notes ? `${notes} | Alt Phone: ${altPhone}` : `Alt Phone: ${altPhone}`;
+    }
+
+    const extraPieces: string[] = [];
+    otherCols.forEach(col => {
+      const val = cellToString(row[col.index]);
+      if (val && val !== name && val !== rawPhone && val !== location) {
+        extraPieces.push(`${col.label}: ${val}`);
+      }
+    });
+    if (extraPieces.length > 0) {
+      notes = notes ? `${notes} | ${extraPieces.join(' | ')}` : extraPieces.join(' | ');
+    }
+
+    // 7. Deduplication handling
+    if (seenInFile.has(normalizedPhone)) {
+      duplicates.push({
+        row: rowNumber,
+        data: row,
+        reason: `Duplicate phone number (${normalizedPhone}) in file`,
+      });
+      continue;
+    }
+    seenInFile.add(normalizedPhone);
+
+    const isExistingInDb = existingPhones.has(normalizedPhone);
 
     valid.push({
-      name: String(name).trim(),
-      phone: String(rawPhone).trim(),
-      normalizedPhone: normalized,
-      location: String(location).trim() || 'Unspecified',
-      category: String(category).trim() || 'General',
-      notes: String(notes).trim(),
+      name: name.trim(),
+      phone: String(rawPhone || normalizedPhone).trim(),
+      normalizedPhone,
+      location: location.trim() || 'Unspecified',
+      category: category.trim() || 'General',
+      notes: notes.trim() + (isExistingInDb ? (notes ? ' | [Existing Contact]' : '[Existing Contact]') : ''),
       source: file.name,
     });
-  });
+  }
 
   return {
     valid,
     invalid,
     duplicates,
-    totalRows: rawRows.length,
+    totalRows: actualRowsProcessed,
   };
 }
 

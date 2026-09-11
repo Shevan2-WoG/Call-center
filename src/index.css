@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@theme {
+  --color-canvas: #b885fc;
+  --color-brand-purple: #6c28f5;
+  --color-brand-purple-dark: #4e0fb8;
+  --color-brand-purple-deep: #380a84;
+  --color-brand-purple-hover: #5816d6;
+  --color-brand-lilac: #f3efff;
+  --color-brand-lilac-border: #e8e1f9;
+  --color-brand-pink: #ff2a85;
+  --color-brand-lime: #88d600;
+  --color-brand-gold: #ffb800;
+  --color-brand-dark: #1e1b4b;
+}
+
+:root {
+  --canvas-bg: #b885fc;
+  --brand-purple: #6c28f5;
+  --brand-purple-dark: #4e0fb8;
+  --brand-pink: #ff2a85;
+  --brand-lime: #88d600;
+  --brand-gold: #ffb800;
+}
+
+body {
+  background-color: #b885fc;
+  color: #1e1b4b;
+}

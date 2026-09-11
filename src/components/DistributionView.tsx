@@ -117,28 +117,33 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
     <div className="space-y-6">
       {/* Empty Database Guidance Notice */}
       {contacts.length === 0 && callers.length === 0 && (
-        <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-6 shadow-2xs">
+        <div className="bg-[#f8f6ff] border border-[#efe8fc] rounded-3xl p-6 shadow-sm">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-2xl bg-[#6c28f5] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-600/20">
               <Sparkles className="w-5 h-5" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-sm font-bold text-emerald-950">Database Clean & Ready for New Data</h3>
-              <p className="text-xs text-emerald-800 leading-relaxed max-w-2xl">
-                All records have been cleared. Follow these simple steps to populate and manage today's calling activities:
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-black text-[#1e1b4b]">Database Ready for Today&apos;s Campaign</h3>
+                <span className="bg-[#ff2a85] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Clean Slate
+                </span>
+              </div>
+              <p className="text-xs text-[#7c7896] leading-relaxed max-w-2xl font-medium">
+                All previous logs have been cleared. Follow the 3-step workflow to import contacts and dispatch equal workloads:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
-                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
-                  <strong className="block text-slate-900 mb-0.5">1. Import Contacts</strong>
-                  <span className="text-slate-600">Go to <strong>Contacts & Import</strong> to upload your Excel (.xlsx) file.</span>
+                <div className="bg-white border border-[#efe8fc] rounded-2xl p-3.5 shadow-xs">
+                  <strong className="block text-[#1e1b4b] font-black mb-1">1. Import Contacts</strong>
+                  <span className="text-[#7c7896]">Go to <strong>Contacts & Import</strong> to upload your Excel (.xlsx) sheet.</span>
                 </div>
-                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
-                  <strong className="block text-slate-900 mb-0.5">2. Register Callers</strong>
-                  <span className="text-slate-600">Go to <strong>Daily Callers</strong> to enter available team members & WhatsApp numbers.</span>
+                <div className="bg-white border border-[#efe8fc] rounded-2xl p-3.5 shadow-xs">
+                  <strong className="block text-[#1e1b4b] font-black mb-1">2. Register Callers</strong>
+                  <span className="text-[#7c7896]">Go to <strong>Daily Callers</strong> to enter agents & WhatsApp numbers.</span>
                 </div>
-                <div className="bg-white/80 border border-emerald-200/80 rounded-xl p-3">
-                  <strong className="block text-slate-900 mb-0.5">3. Distribute Fairly</strong>
-                  <span className="text-slate-600">Return here to run equal distribution and generate WhatsApp dispatches.</span>
+                <div className="bg-white border border-[#efe8fc] rounded-2xl p-3.5 shadow-xs">
+                  <strong className="block text-[#1e1b4b] font-black mb-1">3. Distribute Fairly</strong>
+                  <span className="text-[#7c7896]">Run equal distribution and send WhatsApp assignment rosters.</span>
                 </div>
               </div>
             </div>
@@ -148,59 +153,59 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
       {/* Top Banner & KPI metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-[#efe8fc] shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Unassigned Pool</span>
-            <span className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Unassigned Pool</span>
+            <span className="w-9 h-9 rounded-xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center font-bold">
               <Users className="w-4 h-4" />
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{unassignedContacts.length}</span>
-            <span className="text-xs text-slate-500">contacts ready</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#1e1b4b]">{unassignedContacts.length}</span>
+            <span className="text-xs text-[#7c7896] font-medium">contacts ready</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-[#efe8fc] shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Available Callers</span>
-            <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Available Callers</span>
+            <span className="w-9 h-9 rounded-xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center">
               <Share2 className="w-4 h-4" />
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{availableCallers.length}</span>
-            <span className="text-xs text-slate-500">of {callers.length} total</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#1e1b4b]">{availableCallers.length}</span>
+            <span className="text-xs text-[#7c7896] font-medium">of {callers.length} active</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-[#efe8fc] shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Assigned Today</span>
-            <span className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Assigned Today</span>
+            <span className="w-9 h-9 rounded-xl bg-[#eef2ff] text-[#4f46e5] flex items-center justify-center">
               <PhoneForwarded className="w-4 h-4" />
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{dateAssignments.length}</span>
-            <span className="text-xs text-slate-500">contacts distributed</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#1e1b4b]">{dateAssignments.length}</span>
+            <span className="text-xs text-[#7c7896] font-medium">dispatched</span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs">
+        <div className="bg-white p-5 rounded-2xl border border-[#efe8fc] shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Calls Completed</span>
-            <span className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Calls Completed</span>
+            <span className="w-9 h-9 rounded-xl bg-[#f0fdf4] text-[#88d600] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{completedCount}</span>
-            <span className="text-xs text-slate-500 font-medium">({progressPercent}% completed)</span>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-black text-[#1e1b4b]">{completedCount}</span>
+            <span className="text-xs font-bold text-[#88d600]">({progressPercent}%)</span>
           </div>
-          <div className="w-full bg-slate-100 rounded-full h-1.5 mt-3 overflow-hidden">
+          <div className="w-full bg-[#f1eef9] rounded-full h-1.5 mt-3 overflow-hidden">
             <div
-              className="bg-emerald-600 h-1.5 rounded-full transition-all duration-500"
+              className="bg-[#88d600] h-1.5 rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -208,14 +213,14 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
       </div>
 
       {/* Distribution Action Section */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
+            <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#6c28f5]" />
               Automated Contact Distribution Engine
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
               Calculates equal divisions according to Section 8: e.g. 103 contacts among 4 callers = 26, 26, 26, 25.
             </p>
           </div>
@@ -224,7 +229,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             type="button"
             disabled={unassignedContacts.length === 0 || availableCallers.length === 0 || isDistributing}
             onClick={handleExecuteDistribution}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:cursor-not-allowed"
+            className="px-5 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] disabled:bg-slate-200 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-700/20 cursor-pointer disabled:cursor-not-allowed"
           >
             <Share2 className="w-4 h-4" />
             {isDistributing ? 'Distributing...' : `Distribute ${unassignedContacts.length} Contacts Equally`}
@@ -234,7 +239,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
         <div className="p-5 space-y-5">
           {/* Active Callers Selection */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-[#1e1b4b] uppercase tracking-wider mb-2">
               Select Callers Included in This Distribution:
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -246,23 +251,23 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                     key={c.id}
                     type="button"
                     onClick={() => toggleCaller(c.id)}
-                    className={`p-3 rounded-lg border text-left flex items-start justify-between transition-all cursor-pointer ${
+                    className={`p-3.5 rounded-2xl border text-left flex items-start justify-between transition-all cursor-pointer ${
                       isSelected
-                        ? 'border-emerald-500 bg-emerald-50/40 ring-1 ring-emerald-400'
-                        : 'border-slate-200 bg-white hover:bg-slate-50 opacity-70'
+                        ? 'border-[#6c28f5] bg-[#f3efff] ring-2 ring-[#6c28f5]/20 shadow-xs'
+                        : 'border-[#efe8fc] bg-white hover:bg-[#faf8ff] opacity-75'
                     }`}
                   >
                     <div>
-                      <span className="font-semibold text-sm text-slate-900 block">{c.name}</span>
-                      <span className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                        <MessageSquare className="w-3 h-3 text-emerald-600" />
+                      <span className="font-bold text-sm text-[#1e1b4b] block">{c.name}</span>
+                      <span className="text-xs text-[#7c7896] flex items-center gap-1 mt-0.5">
+                        <MessageSquare className="w-3 h-3 text-[#6c28f5]" />
                         {c.whatsappNumber}
                       </span>
                       <span
-                        className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        className={`inline-block mt-2 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                           isAvail
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-amber-100 text-amber-800'
+                            ? 'bg-[#88d600]/15 text-[#629c00]'
+                            : 'bg-[#ffb800]/20 text-[#b47800]'
                         }`}
                       >
                         {c.availabilityStatus}
@@ -272,7 +277,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => {}}
-                      className="mt-1 accent-emerald-600"
+                      className="mt-1 accent-[#6c28f5] w-4 h-4 rounded cursor-pointer"
                     />
                   </button>
                 );
@@ -282,29 +287,29 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
           {/* Distribution Simulation & Preview Math */}
           {unassignedContacts.length > 0 && availableCallers.length > 0 ? (
-            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+            <div className="bg-[#f8f6ff] rounded-2xl p-4 border border-[#efe8fc]">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <span className="text-xs font-bold text-[#1e1b4b] uppercase tracking-wider">
                   Fair Distribution Calculation Preview:
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs font-semibold text-[#6c28f5]">
                   {unassignedContacts.length} contacts ÷ {availableCallers.length} callers
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {previewPlan.plan.map((item, idx) => (
-                  <div key={item.caller.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-2xs">
+                  <div key={item.caller.id} className="bg-white p-3.5 rounded-xl border border-[#efe8fc] shadow-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-slate-500">Caller #{idx + 1}</span>
-                      <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold">
+                      <span className="text-xs font-medium text-[#7c7896]">Caller #{idx + 1}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] font-extrabold">
                         +{item.count} contacts
                       </span>
                     </div>
-                    <span className="font-semibold text-sm text-slate-900 block mt-1">
+                    <span className="font-bold text-sm text-[#1e1b4b] block mt-1.5">
                       {item.caller.name}
                     </span>
-                    <span className="text-xs text-slate-400 mt-1 block">
+                    <span className="text-xs text-[#7c7896] mt-1 block">
                       WhatsApp: {item.caller.whatsappNumber}
                     </span>
                   </div>
@@ -312,17 +317,17 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
               </div>
             </div>
           ) : unassignedContacts.length === 0 ? (
-            <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <div className="text-xs text-emerald-900">
-                <span className="font-semibold">All contacts are currently distributed!</span> If you have new contacts, upload an Excel file from the "Contacts & Import" tab to distribute more.
+            <div className="p-4 bg-[#f8f6ff] rounded-2xl border border-[#efe8fc] flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 text-[#88d600] shrink-0" />
+              <div className="text-xs text-[#1e1b4b]">
+                <span className="font-bold">All contacts are distributed!</span> Upload more contacts in the &quot;Contacts &amp; Import&quot; tab to dispatch additional rosters.
               </div>
             </div>
           ) : (
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
-              <span className="text-xs text-amber-800">
-                Please select at least one available caller above to distribute the {unassignedContacts.length} unassigned contacts.
+            <div className="p-4 bg-[#fffbeb] rounded-2xl border border-[#fef3c7] flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-[#ffb800] shrink-0" />
+              <span className="text-xs text-[#92400e] font-semibold">
+                Please select at least one caller above to distribute the {unassignedContacts.length} unassigned contacts.
               </span>
             </div>
           )}
@@ -330,19 +335,19 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
       </div>
 
       {/* WhatsApp Distribution Section */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50/50">
+      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff]">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-[#6c28f5]" />
                 WhatsApp Assignment Dispatch Hub
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Send callers their daily assignments directly to WhatsApp or copy formatted assignment rosters.
+              <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
+                Send callers their daily assignments directly to WhatsApp or copy formatted rosters.
               </p>
             </div>
-            <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium border border-slate-200">
+            <span className="text-xs bg-[#f3efff] text-[#6c28f5] px-3 py-1 rounded-full font-bold border border-[#e8e1f9]">
               Date: {callingDate}
             </span>
           </div>
@@ -350,8 +355,8 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
         <div className="p-5">
           {callers.length === 0 ? (
-            <div className="text-center py-8 text-slate-400 text-sm">
-              No callers registered. Register callers in the "Daily Callers" tab.
+            <div className="text-center py-8 text-[#7c7896] text-sm">
+              No callers registered. Register callers in the &quot;Daily Callers&quot; tab.
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -376,47 +381,47 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                 return (
                   <div
                     key={caller.id}
-                    className="border border-slate-200 rounded-xl p-4 bg-white hover:border-slate-300 transition-shadow flex flex-col justify-between"
+                    className="border border-[#efe8fc] rounded-2xl p-4 bg-white hover:border-[#6c28f5]/40 hover:shadow-md transition-all flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+                            <h3 className="font-bold text-[#1e1b4b] text-sm sm:text-base">
                               {caller.name}
                             </h3>
                             <span
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                                 caller.availabilityStatus === 'available'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-slate-100 text-slate-600'
+                                  ? 'bg-[#88d600]/15 text-[#629c00]'
+                                  : 'bg-[#ffb800]/20 text-[#b47800]'
                               }`}
                             >
                               {caller.availabilityStatus}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                            WhatsApp: <span className="font-mono text-slate-700">{caller.whatsappNumber}</span>
+                          <p className="text-xs text-[#7c7896] mt-1 flex items-center gap-1">
+                            WhatsApp: <span className="font-mono text-[#1e1b4b] font-semibold">{caller.whatsappNumber}</span>
                           </p>
                         </div>
 
                         <div className="text-right">
-                          <span className="text-lg font-bold text-slate-900">{assignedList.length}</span>
-                          <span className="text-xs text-slate-400 block">Assigned</span>
+                          <span className="text-xl font-black text-[#1e1b4b]">{assignedList.length}</span>
+                          <span className="text-[11px] text-[#7c7896] block font-semibold">Assigned</span>
                         </div>
                       </div>
 
                       {/* Work progress bar */}
-                      <div className="mt-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                        <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
+                      <div className="mt-3 bg-[#f8f6ff] p-2.5 rounded-xl border border-[#efe8fc]">
+                        <div className="flex items-center justify-between text-xs text-[#7c7896] mb-1 font-medium">
                           <span>Progress: {completed}/{assignedList.length} completed</span>
-                          <span className="font-semibold text-emerald-600">
+                          <span className="font-bold text-[#88d600]">
                             {assignedList.length > 0 ? Math.round((completed / assignedList.length) * 100) : 0}%
                           </span>
                         </div>
-                        <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                        <div className="w-full bg-[#e8e1f9] rounded-full h-1.5 overflow-hidden">
                           <div
-                            className="bg-emerald-600 h-1.5 rounded-full"
+                            className="bg-[#88d600] h-1.5 rounded-full"
                             style={{
                               width: `${assignedList.length > 0 ? (completed / assignedList.length) * 100 : 0}%`,
                             }}
@@ -426,59 +431,47 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
                       {/* Preview toggle */}
                       {isPreviewOpen && (
-                        <div className="mt-3 p-3 bg-slate-900 text-emerald-400 font-mono text-[11px] rounded-lg overflow-x-auto max-h-48 whitespace-pre-wrap leading-relaxed border border-slate-800">
+                        <div className="mt-3 p-3 bg-[#1e1b4b] text-purple-200 font-mono text-[11px] rounded-xl overflow-x-auto max-h-48 whitespace-pre-wrap leading-relaxed border border-purple-900">
                           {formattedMsg}
                         </div>
                       )}
                     </div>
 
                     {/* Action buttons */}
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                    <div className="mt-4 pt-3 border-t border-[#efe8fc] flex flex-wrap items-center gap-2">
                       <a
                         href={waUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
-                        title="Send via WhatsApp Web or App"
+                        className="px-3 py-1.5 bg-[#88d600] hover:bg-[#78be00] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        Send WhatsApp
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Send via WhatsApp
                       </a>
 
                       <button
                         type="button"
                         onClick={() => handleCopy(caller.id, formattedMsg)}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
+                        className="px-3 py-1.5 bg-[#f3efff] hover:bg-[#eae3fe] text-[#6c28f5] rounded-xl text-xs font-bold flex items-center gap-1.5 border border-[#e8e1f9] transition-colors cursor-pointer"
                       >
-                        {isCopied ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            <span className="text-emerald-700 font-medium">Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" />
-                            Copy Roster
-                          </>
-                        )}
+                        <Copy className="w-3.5 h-3.5" />
+                        {isCopied ? 'Copied!' : 'Copy Roster'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setActivePreviewCallerId(isPreviewOpen ? null : caller.id)}
-                        className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors"
+                        className="px-2.5 py-1.5 text-xs text-[#7c7896] hover:text-[#1e1b4b] font-semibold"
                       >
-                        {isPreviewOpen ? 'Hide Text' : 'View Text'}
+                        {isPreviewOpen ? 'Hide Text' : 'Preview Text'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => onSwitchToCaller(caller.id)}
-                        className="ml-auto px-2.5 py-1.5 text-xs text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-1 hover:underline"
-                        title="View Caller Workspace"
+                        className="ml-auto px-2.5 py-1.5 text-xs text-[#6c28f5] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                       >
-                        Agent View
+                        Open Workspace
                         <ArrowRight className="w-3 h-3" />
                       </button>
                     </div>
@@ -492,3 +485,4 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
     </div>
   );
 };
+

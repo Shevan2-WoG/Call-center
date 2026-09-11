@@ -61,17 +61,17 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
   const isFollowUp = outcome === 'Follow-up Required' || outcome === 'Recall';
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#efe8fc] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-start justify-between pb-4 border-b border-[#efe8fc]">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#6c28f5] bg-[#f3efff] px-2.5 py-0.5 rounded-full border border-[#e8e1f9]">
               Call Feedback Logger
             </span>
-            <h3 className="text-lg font-bold text-slate-900 mt-1.5">{assignment.contactName}</h3>
-            <p className="text-xs text-slate-500 font-mono flex items-center gap-2 mt-0.5">
-              <span>{assignment.contactPhone}</span>
+            <h3 className="text-lg font-black text-[#1e1b4b] mt-1.5">{assignment.contactName}</h3>
+            <p className="text-xs text-[#7c7896] font-mono flex items-center gap-2 mt-0.5 font-medium">
+              <span className="text-[#6c28f5] font-bold">{assignment.contactPhone}</span>
               {assignment.contactLocation && <span>• {assignment.contactLocation}</span>}
               {assignment.contactCategory && <span>• {assignment.contactCategory}</span>}
             </p>
@@ -80,22 +80,22 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="text-[#7c7896] hover:text-[#1e1b4b] p-1.5 rounded-xl hover:bg-[#f3efff] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Quick Dial & WhatsApp triggers */}
-        <div className="my-4 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-          <div className="text-xs text-slate-600">
-            <span className="font-semibold block text-slate-900">Initiate Call or Chat</span>
+        <div className="my-4 p-3.5 bg-[#fbf9ff] rounded-2xl border border-[#efe8fc] flex items-center justify-between">
+          <div className="text-xs text-[#7c7896]">
+            <span className="font-bold block text-[#1e1b4b]">Initiate Call or Chat</span>
             Click to dial or open chat with this contact
           </div>
           <div className="flex items-center gap-2">
             <a
               href={`tel:${assignment.contactPhone}`}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+              className="px-3.5 py-2 bg-[#6c28f5] hover:bg-[#5816d6] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20"
             >
               <PhoneCall className="w-3.5 h-3.5" />
               Dial Now
@@ -104,7 +104,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
               href={`https://wa.me/${cleanPhone}`}
               target="_blank"
               rel="noreferrer"
-              className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-emerald-700 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors shadow-2xs"
+              className="px-3.5 py-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 border border-[#25D366]/30 text-[#128C7E] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
             >
               <MessageSquare className="w-3.5 h-3.5" />
               WhatsApp
@@ -115,8 +115,8 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {/* Outcomes Selection Grid */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1.5">
-              Select Call Outcome * (Spec Section 12)
+            <label className="block font-bold text-[#1e1b4b] mb-1.5">
+              Select Call Outcome *
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-1">
               {CALL_OUTCOMES.map((item) => {
@@ -126,10 +126,10 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
                     key={item}
                     type="button"
                     onClick={() => setOutcome(item)}
-                    className={`px-2.5 py-2 rounded-lg text-left text-xs font-medium border transition-all cursor-pointer ${
+                    className={`px-2.5 py-2 rounded-xl text-left text-xs font-bold border transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs font-semibold'
-                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-md shadow-purple-600/20'
+                        : 'bg-[#fbf9ff] text-[#1e1b4b] border-[#efe8fc] hover:bg-[#f3efff]'
                     }`}
                   >
                     {item}
@@ -141,27 +141,25 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
 
           {/* Follow-up Fields if relevant */}
           {isFollowUp && (
-            <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-xl space-y-3">
-              <span className="text-[11px] font-bold text-amber-900 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-3.5 bg-[#ff2a85]/10 border border-[#ff2a85]/20 rounded-2xl space-y-3">
+              <span className="text-[11px] font-bold text-[#d61168] flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-[#ff2a85]" />
                 Schedule Follow-up Action
               </span>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[11px] font-medium text-amber-900 mb-1">
+                  <label className="block text-[11px] font-bold text-[#d61168] mb-1">
                     Follow-up Date
                   </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={followUpDate}
-                      onChange={(e) => setFollowUpDate(e.target.value)}
-                      className="w-full bg-white px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs outline-none"
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={followUpDate}
+                    onChange={(e) => setFollowUpDate(e.target.value)}
+                    className="w-full bg-white px-2.5 py-1.5 border border-[#ff2a85]/30 rounded-xl text-xs outline-none font-medium text-[#1e1b4b]"
+                  />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-medium text-amber-900 mb-1">
+                  <label className="block text-[11px] font-bold text-[#d61168] mb-1">
                     Preferred Callback Time
                   </label>
                   <input
@@ -169,7 +167,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
                     value={preferredCallbackTime}
                     onChange={(e) => setPreferredCallbackTime(e.target.value)}
                     placeholder="e.g. 2:30 PM"
-                    className="w-full bg-white px-2.5 py-1.5 border border-amber-200 rounded-lg text-xs outline-none"
+                    className="w-full bg-white px-2.5 py-1.5 border border-[#ff2a85]/30 rounded-xl text-xs outline-none font-medium text-[#1e1b4b]"
                   />
                 </div>
               </div>
@@ -178,7 +176,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
 
           {/* Comment */}
           <div>
-            <label className="block font-bold text-slate-700 mb-1">
+            <label className="block font-bold text-[#1e1b4b] mb-1">
               Feedback Comment / Conversation Summary
             </label>
             <textarea
@@ -186,13 +184,13 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="e.g. Discussed course pricing. Client requested brochure on WhatsApp."
-              className="w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-xs"
+              className="w-full px-3 py-2 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium resize-none transition-all"
             />
           </div>
 
           {/* Additional Notes */}
           <div>
-            <label className="block font-medium text-slate-600 mb-1">
+            <label className="block font-bold text-[#7c7896] mb-1">
               Additional Notes (Optional)
             </label>
             <input
@@ -200,33 +198,33 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value)}
               placeholder="e.g. Lead source: Referral from Patrick"
-              className="w-full px-3 py-1.5 border border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-xs"
+              className="w-full px-3 py-2 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium transition-all"
             />
           </div>
 
           {/* Action buttons */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-3 border-t border-[#efe8fc] flex items-center justify-between">
             <button
               type="button"
               onClick={() => onViewHistory(assignment.contactId, assignment.contactName)}
-              className="text-xs text-slate-600 hover:text-slate-900 flex items-center gap-1.5 hover:underline cursor-pointer"
+              className="text-xs text-[#6c28f5] hover:text-[#5816d6] font-bold flex items-center gap-1.5 cursor-pointer"
             >
-              <History className="w-3.5 h-3.5 text-slate-500" />
-              View Contact History
+              <History className="w-3.5 h-3.5 text-[#6c28f5]" />
+              View History
             </button>
 
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-[#7c7896] hover:bg-[#f3efff] rounded-xl font-bold transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                className="px-4 py-2 bg-[#6c28f5] hover:bg-[#5816d6] text-white font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer disabled:opacity-50"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 {isSubmitting ? 'Saving...' : 'Save Feedback'}
