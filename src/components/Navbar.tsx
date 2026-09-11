@@ -55,31 +55,31 @@ export const Navbar: React.FC<NavbarProps> = ({
   ];
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
+    <header className="bg-[#240c54] text-white border-b border-[#3b1580] sticky top-0 z-40 shadow-lg shadow-purple-950/20">
       {/* Top Banner with Brand and Controls */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center text-white shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-[#6c28f5] flex items-center justify-center text-white shadow-md shadow-purple-600/30">
               <PhoneCall className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-900 text-base sm:text-lg tracking-tight">
-                  Call Center Hub
+                <span className="font-black text-white text-base sm:text-lg tracking-tight">
+                  Call Center Hub<span className="text-[#ff2a85]">.</span>
                 </span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-[#ff2a85] text-white font-extrabold uppercase tracking-wider">
                   MVP v1.0
                 </span>
                 {isSyncing && (
-                  <span className="flex items-center gap-1 text-xs text-slate-500">
-                    <RefreshCw className="w-3 h-3 animate-spin text-emerald-600" />
+                  <span className="flex items-center gap-1 text-xs text-purple-200">
+                    <RefreshCw className="w-3 h-3 animate-spin text-[#88d600]" />
                     Syncing
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 hidden sm:block">
+              <p className="text-xs text-purple-200/80 hidden sm:block font-medium">
                 Contact Distribution, WhatsApp Dispatch & Feedback Tracking
               </p>
             </div>
@@ -88,31 +88,31 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Right Toolbar: Date & Role Switcher */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Calling Date Picker */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-700">
-              <Calendar className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden md:inline font-medium text-slate-500">Date:</span>
+            <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-purple-100">
+              <Calendar className="w-3.5 h-3.5 text-purple-300" />
+              <span className="hidden md:inline font-bold text-purple-200">Date:</span>
               <input
                 type="date"
                 value={callingDate}
                 onChange={(e) => setCallingDate(e.target.value)}
-                className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
+                className="bg-transparent font-bold text-white outline-none cursor-pointer"
                 title="Calling Date"
               />
             </div>
 
             {/* Active Caller selector if in caller dashboard mode */}
             {currentRole === 'caller' && setSelectedCallerId && callers.length > 0 && (
-              <div className="flex items-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5 text-xs">
-                <Headset className="w-3.5 h-3.5 text-emerald-700" />
-                <span className="font-medium text-emerald-800 hidden sm:inline">Agent:</span>
+              <div className="flex items-center gap-1 bg-[#6c28f5]/60 border border-purple-300/40 rounded-xl px-2.5 py-1.5 text-xs text-white">
+                <Headset className="w-3.5 h-3.5 text-purple-200" />
+                <span className="font-bold text-purple-200 hidden sm:inline">Agent:</span>
                 <select
                   value={selectedCallerId}
                   onChange={(e) => setSelectedCallerId(e.target.value)}
                   aria-label="Active Agent"
-                  className="bg-transparent text-emerald-900 font-semibold outline-none cursor-pointer"
+                  className="bg-transparent text-white font-bold outline-none cursor-pointer"
                 >
                   {callers.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id} className="text-[#1e1b4b]">
                       {c.name}
                     </option>
                   ))}
@@ -121,14 +121,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
 
             {/* Role Switcher */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+            <div className="flex items-center bg-[#170638] p-1 rounded-xl border border-white/15">
               <button
                 type="button"
                 onClick={() => setCurrentRole('admin')}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                   currentRole === 'admin'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#6c28f5] text-white shadow-sm'
+                    : 'text-purple-200/80 hover:text-white'
                 }`}
               >
                 Admin
@@ -139,10 +139,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setCurrentRole('caller');
                   setActiveTab('caller_dashboard');
                 }}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
                   currentRole === 'caller'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#6c28f5] text-white shadow-sm'
+                    : 'text-purple-200/80 hover:text-white'
                 }`}
               >
                 Caller
@@ -152,10 +152,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onClick={() => {
                   setCurrentRole('tech_lead');
                 }}
-                className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
                   currentRole === 'tech_lead'
-                    ? 'bg-slate-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-[#6c28f5] text-white shadow-sm'
+                    : 'text-purple-200/80 hover:text-white'
                 }`}
                 title="Technical Lead / System Logs"
               >
@@ -169,10 +169,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={onEmptyData}
               title="Empty database and wipe contacts, callers, and assignments to start fresh"
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 bg-red-50/50 hover:bg-red-50 text-red-700 flex items-center gap-1 transition-colors"
+              className="text-xs px-2.5 py-1.5 rounded-xl border border-red-400/30 bg-red-500/20 hover:bg-red-500/30 text-red-100 flex items-center gap-1 transition-colors cursor-pointer font-bold"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Empty Database</span>
+              <span className="hidden sm:inline">Empty Database</span>
             </button>
 
             {/* Reset / Seed Demo Data */}
@@ -180,7 +180,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               onClick={onResetData}
               title="Load sample demonstration data for testing"
-              className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center gap-1 transition-colors"
+              className="text-xs px-2.5 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-purple-100 flex items-center gap-1 transition-colors cursor-pointer font-bold"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span className="hidden lg:inline">Sample Demo</span>
@@ -189,7 +189,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 overflow-x-auto scrollbar-none border-t border-slate-100 py-1.5">
+        <div className="flex space-x-1.5 overflow-x-auto scrollbar-none border-t border-purple-900/40 py-2">
           {tabs
             .filter((t) => t.roles.includes(currentRole))
             .map((tab) => {
@@ -200,13 +200,13 @@ export const Navbar: React.FC<NavbarProps> = ({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-[#6c28f5] text-white shadow-md shadow-purple-950/40 border border-purple-400/40'
+                      : 'text-purple-200/80 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-purple-300'}`} />
                   <span>{tab.label}</span>
                 </button>
               );

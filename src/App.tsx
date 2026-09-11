@@ -311,7 +311,7 @@ export default function App() {
   const currentCaller = callers.find((c) => c.id === selectedCallerId) || callers[0];
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#ebdffc] text-[#1e1b4b] flex flex-col font-sans selection:bg-[#6c28f5] selection:text-white">
       {/* Navigation & Header */}
       <Navbar
         activeTab={activeTab}
@@ -383,8 +383,8 @@ export default function App() {
               onSwitchCaller={setSelectedCallerId}
             />
           ) : (
-            <div className="p-8 text-center bg-white rounded-xl border border-slate-200">
-              <p className="text-sm text-slate-500">
+            <div className="p-8 text-center bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm">
+              <p className="text-sm text-[#7c7896] font-medium">
                 No callers registered in the system yet. Please register callers in the "Daily Callers" tab first.
               </p>
             </div>
@@ -414,10 +414,10 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+      <footer className="bg-[#240c54] border-t border-[#3b1580] py-4 text-center text-xs text-purple-200/80">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>Call Center Contact Distribution & Feedback System • MVP v1.0</span>
-          <span className="font-mono text-[11px]">
+          <span className="font-medium">Call Center Contact Distribution & Feedback System • MVP v1.0</span>
+          <span className="font-mono text-[11px] text-purple-300">
             Database: Cloud Firestore ({assignments.length} assignments, {attempts.length} attempts)
           </span>
         </div>

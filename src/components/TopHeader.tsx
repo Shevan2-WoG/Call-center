@@ -48,7 +48,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const selectedCaller = callers.find((c) => c.id === selectedCallerId);
 
   return (
-    <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-5 border-b border-[#efe8fc]">
+    <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-5 border-b border-[#e2d0fa]">
       {/* Left: Greeting matching "Hey, Rohit" */}
       <div className="flex items-center justify-between w-full md:w-auto gap-4">
         <div className="flex items-center gap-3">
@@ -82,7 +82,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
       {/* Center: Search pill matching "What do you want to eat today..." */}
       <div className="w-full md:max-w-xs lg:max-w-sm">
-        <div className="relative flex items-center bg-[#f8f6ff] border border-[#efe8fc] hover:border-[#6c28f5]/40 focus-within:border-[#6c28f5] rounded-full px-4 py-2 transition-all">
+        <div className="relative flex items-center bg-[#f8f2fe] border border-[#e2d0fa] hover:border-[#6c28f5]/40 focus-within:border-[#6c28f5] focus-within:bg-[#fbf7fe] rounded-full px-4 py-2 transition-all">
           <Search className="w-4 h-4 text-[#7c7896] shrink-0 mr-2" />
           <input
             type="text"
@@ -97,7 +97,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       {/* Right Controls: Exactly matching the 3 square action buttons + Profile in PNG */}
       <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap self-end md:self-auto">
         {/* Calling Date Selector */}
-        <div className="flex items-center gap-1.5 bg-[#f8f6ff] border border-[#efe8fc] rounded-xl px-2.5 py-1.5 text-xs text-[#1e1b4b]">
+        <div className="flex items-center gap-1.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2.5 py-1.5 text-xs text-[#1e1b4b]">
           <Calendar className="w-3.5 h-3.5 text-[#6c28f5]" />
           <input
             type="date"
@@ -109,7 +109,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </div>
 
         {/* Role Switcher */}
-        <div className="flex items-center bg-[#f8f6ff] p-0.5 rounded-xl border border-[#efe8fc]">
+        <div className="flex items-center bg-[#f8f2fe] p-0.5 rounded-xl border border-[#e2d0fa]">
           <button
             type="button"
             onClick={() => setCurrentRole('admin')}
@@ -198,7 +198,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </button>
 
         {/* Profile Avatar matching PNG top-right photo */}
-        <div className="w-9 h-9 rounded-xl bg-[#1e1b4b] text-white flex items-center justify-center text-xs font-bold overflow-hidden ring-2 ring-[#efe8fc] shadow-xs">
+        <div className="w-9 h-9 rounded-xl bg-[#1e1b4b] text-white flex items-center justify-center text-xs font-bold overflow-hidden ring-2 ring-[#e2d0fa] shadow-xs">
           <span>ER</span>
         </div>
       </div>

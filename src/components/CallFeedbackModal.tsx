@@ -62,9 +62,9 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#efe8fc] animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-[#fbf7fe] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#e2d0fa] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-[#efe8fc]">
+        <div className="flex items-start justify-between pb-4 border-b border-[#e2d0fa]">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#6c28f5] bg-[#f3efff] px-2.5 py-0.5 rounded-full border border-[#e8e1f9]">
               Call Feedback Logger
@@ -87,7 +87,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
         </div>
 
         {/* Quick Dial & WhatsApp triggers */}
-        <div className="my-4 p-3.5 bg-[#fbf9ff] rounded-2xl border border-[#efe8fc] flex items-center justify-between">
+        <div className="my-4 p-3.5 bg-[#f8f2fe] rounded-2xl border border-[#e2d0fa] flex items-center justify-between">
           <div className="text-xs text-[#7c7896]">
             <span className="font-bold block text-[#1e1b4b]">Initiate Call or Chat</span>
             Click to dial or open chat with this contact
@@ -129,7 +129,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
                     className={`px-2.5 py-2 rounded-xl text-left text-xs font-bold border transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-md shadow-purple-600/20'
-                        : 'bg-[#fbf9ff] text-[#1e1b4b] border-[#efe8fc] hover:bg-[#f3efff]'
+                        : 'bg-[#f8f2fe] text-[#1e1b4b] border-[#e2d0fa] hover:bg-[#f3e9fd]'
                     }`}
                   >
                     {item}
@@ -184,7 +184,7 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="e.g. Discussed course pricing. Client requested brochure on WhatsApp."
-              className="w-full px-3 py-2 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium resize-none transition-all"
+              className="w-full px-3 py-2 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium resize-none transition-all"
             />
           </div>
 
@@ -198,12 +198,12 @@ export const CallFeedbackModal: React.FC<CallFeedbackModalProps> = ({
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value)}
               placeholder="e.g. Lead source: Referral from Patrick"
-              className="w-full px-3 py-2 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium transition-all"
+              className="w-full px-3 py-2 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-xs text-[#1e1b4b] font-medium transition-all"
             />
           </div>
 
           {/* Action buttons */}
-          <div className="pt-3 border-t border-[#efe8fc] flex items-center justify-between">
+          <div className="pt-3 border-t border-[#e2d0fa] flex items-center justify-between">
             <button
               type="button"
               onClick={() => onViewHistory(assignment.contactId, assignment.contactName)}

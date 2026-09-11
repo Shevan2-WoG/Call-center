@@ -118,7 +118,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header bar */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center shadow-xs">
@@ -155,7 +155,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
 
       {/* Callers Grid */}
       {callers.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-dashed border-[#efe8fc] p-12 text-center shadow-sm">
+        <div className="bg-[#fbf7fe] rounded-3xl border border-dashed border-[#cbaff8] p-12 text-center shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center mx-auto mb-4 shadow-xs">
             <Users className="w-7 h-7" />
           </div>
@@ -185,10 +185,10 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
           return (
             <div
               key={caller.id}
-              className={`bg-white rounded-3xl border p-5 transition-all shadow-sm ${
+              className={`rounded-3xl border p-5 transition-all shadow-sm ${
                 isAvail
-                  ? 'border-[#efe8fc] hover:border-[#6c28f5]/40'
-                  : 'border-[#ffb800]/30 bg-[#ffb800]/5'
+                  ? 'bg-[#fbf7fe] border-[#e2d0fa] hover:border-[#6c28f5]/40 hover:bg-[#f8f2fe]'
+                  : 'border-[#ffb800]/40 bg-[#fffbeb]'
               }`}
             >
               <div className="flex items-start justify-between">
@@ -259,14 +259,14 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
               </div>
 
               {/* Status Switcher & Actions */}
-              <div className="mt-4 pt-3 border-t border-[#efe8fc] flex items-center justify-between">
+              <div className="mt-4 pt-3 border-t border-[#e2d0fa] flex items-center justify-between">
                 <div className="flex items-center gap-1 text-xs">
                   <span className="text-[11px] text-[#7c7896] mr-1 font-bold">Status:</span>
                   <button
                     type="button"
                     onClick={() => handleToggleAvailability(caller, 'available')}
                     className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      isAvail ? 'bg-[#88d600] text-white shadow-xs' : 'bg-[#fbf9ff] text-[#7c7896] hover:bg-[#f3efff]'
+                      isAvail ? 'bg-[#88d600] text-white shadow-xs' : 'bg-[#f3e9fd] text-[#7c7896] hover:bg-[#ede0fc]'
                     }`}
                   >
                     Avail
@@ -275,7 +275,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                     type="button"
                     onClick={() => handleToggleAvailability(caller, 'busy')}
                     className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                      isBusy ? 'bg-[#ffb800] text-white shadow-xs' : 'bg-[#fbf9ff] text-[#7c7896] hover:bg-[#f3efff]'
+                      isBusy ? 'bg-[#ffb800] text-white shadow-xs' : 'bg-[#f3e9fd] text-[#7c7896] hover:bg-[#ede0fc]'
                     }`}
                   >
                     Busy
@@ -286,7 +286,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                     className={`px-2 py-0.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                       caller.availabilityStatus === 'unavailable'
                         ? 'bg-[#ff2a85] text-white shadow-xs'
-                        : 'bg-[#fbf9ff] text-[#7c7896] hover:bg-[#f3efff]'
+                        : 'bg-[#f3e9fd] text-[#7c7896] hover:bg-[#ede0fc]'
                     }`}
                     title="Mark unavailable & prompt reassignment"
                   >
@@ -326,7 +326,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
       {/* Add / Edit Caller Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#efe8fc] animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[#fbf7fe] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#e2d0fa] animate-in fade-in zoom-in-95 duration-150">
             <h3 className="text-base font-black text-[#1e1b4b] mb-1">
               {editingCaller ? 'Edit Caller Information' : 'Register Daily Caller'}
             </h3>
@@ -348,7 +348,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Caller E (Florence Babirye)"
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   required
                 />
               </div>
@@ -363,7 +363,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                     if (!whatsappNumber) setWhatsappNumber(e.target.value);
                   }}
                   placeholder="e.g. +256 701 234 567"
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
                   required
                 />
               </div>
@@ -375,7 +375,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                   value={whatsappNumber}
                   onChange={(e) => setWhatsappNumber(e.target.value)}
                   placeholder="e.g. +256 701 234 567"
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
                   required
                 />
                 <span className="text-[11px] text-[#7c7896] mt-1 block font-medium">
@@ -391,7 +391,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                     value={teamGroup}
                     onChange={(e) => setTeamGroup(e.target.value)}
                     placeholder="e.g. Kampala Central"
-                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                    className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
                 <div>
@@ -402,7 +402,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                     max="200"
                     value={targetCalls}
                     onChange={(e) => setTargetCalls(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                    className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
               </div>
@@ -412,7 +412,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                 <select
                   value={availabilityStatus}
                   onChange={(e) => setAvailabilityStatus(e.target.value as AvailabilityStatus)}
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all cursor-pointer"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all cursor-pointer"
                 >
                   <option value="available">Available (Ready for assignment)</option>
                   <option value="busy">Busy (In training / partial)</option>
@@ -420,7 +420,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                 </select>
               </div>
 
-              <div className="pt-3 border-t border-[#efe8fc] flex items-center justify-end gap-2">
+              <div className="pt-3 border-t border-[#e2d0fa] flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={resetForm}

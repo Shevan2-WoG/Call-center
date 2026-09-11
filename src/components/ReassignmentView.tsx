@@ -80,7 +80,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
 
   if (callers.length === 0) {
     return (
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-12 text-center max-w-xl mx-auto my-8 shadow-sm">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-12 text-center max-w-xl mx-auto my-8 shadow-sm">
         <div className="w-14 h-14 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center mx-auto mb-4 shadow-xs">
           <RotateCcw className="w-7 h-7" />
         </div>
@@ -95,7 +95,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Overview header */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-6 shadow-sm">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center shadow-xs">
             <RotateCcw className="w-5 h-5 text-[#6c28f5]" />
@@ -128,8 +128,8 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
       )}
 
       {/* Reassignment Wizard */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-[#efe8fc] bg-[#fbf9ff]">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-[#e2d0fa] bg-[#f3e8fd]">
           <h3 className="text-sm font-black text-[#1e1b4b]">
             Initiate Contact Redistribution
           </h3>
@@ -148,7 +148,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
               <select
                 value={selectedUnavailableId}
                 onChange={(e) => setSelectedUnavailableId(e.target.value)}
-                className="w-full px-3.5 py-2.5 border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] bg-[#fbf9ff] text-[#1e1b4b] font-bold cursor-pointer transition-all"
+                className="w-full px-3.5 py-2.5 border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] bg-[#f8f2fe] text-[#1e1b4b] font-bold cursor-pointer transition-all"
               >
                 {callers.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -167,13 +167,13 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="e.g. Caller fell ill, shifted to emergency team"
-                className="w-full px-3.5 py-2.5 border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] bg-[#fbf9ff] text-[#1e1b4b] font-medium transition-all"
+                className="w-full px-3.5 py-2.5 border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white bg-[#f8f2fe] text-[#1e1b4b] font-medium transition-all"
               />
             </div>
           </div>
 
           {/* Pending Contacts Count */}
-          <div className="p-5 bg-[#fbf9ff] border border-[#efe8fc] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <span className="text-[#7c7896] block font-bold">Unfinished Workload:</span>
               <span className="text-2xl font-black text-[#1e1b4b] mt-0.5 block">
@@ -205,7 +205,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
                 {preview.planSummary.map((item) => (
                   <div
                     key={item.toCaller.id}
-                    className="p-3.5 bg-white border border-[#efe8fc] rounded-2xl shadow-xs flex items-center justify-between"
+                    className="p-3.5 bg-[#fbf7fe] border border-[#e2d0fa] rounded-2xl shadow-xs flex items-center justify-between"
                   >
                     <div>
                       <span className="font-black text-[#1e1b4b] block text-xs">
@@ -222,7 +222,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
                 ))}
               </div>
 
-              <div className="mt-5 pt-4 border-t border-[#efe8fc] flex justify-end">
+              <div className="mt-5 pt-4 border-t border-[#e2d0fa] flex justify-end">
                 <button
                   type="button"
                   disabled={isProcessing}
@@ -251,8 +251,8 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
       </div>
 
       {/* Reassignment Audit History Table */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex items-center justify-between">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="font-black text-sm text-[#1e1b4b]">Reassignment Audit Log</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9] font-bold">
@@ -263,7 +263,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
 
         <div className="overflow-x-auto max-h-72">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#fbf9ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px] tracking-wider">
+            <thead className="bg-[#f8f2fe] border-b border-[#e2d0fa] text-[#7c7896] uppercase font-bold text-[11px] tracking-wider">
               <tr>
                 <th className="p-3.5 pl-5">#</th>
                 <th className="p-3.5">Original Caller</th>
@@ -272,7 +272,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
                 <th className="p-3.5 pr-5">Reassigned At</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#efe8fc]">
+            <tbody className="divide-y divide-[#e2d0fa]">
               {reassignments.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-[#7c7896] font-medium">
@@ -281,7 +281,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
                 </tr>
               ) : (
                 reassignments.map((record, index) => (
-                  <tr key={record.id} className="hover:bg-[#fbf9ff] transition-colors">
+                  <tr key={record.id} className="hover:bg-[#f3e9fd] transition-colors">
                     <td className="p-3.5 pl-5 font-mono text-[#7c7896] font-bold">{index + 1}</td>
                     <td className="p-3.5 font-bold text-[#1e1b4b]">{record.fromCallerName}</td>
                     <td className="p-3.5 font-bold text-[#6c28f5] flex items-center gap-1.5">

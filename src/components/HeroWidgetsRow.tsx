@@ -89,11 +89,11 @@ export const HeroWidgetsRow: React.FC<HeroWidgetsRowProps> = ({
         </div>
 
         {/* Right Card: Floating Balance Widget (Matching the Floating Balance Card in PNG) */}
-        <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-3xl p-5 border border-[#efe8fc] shadow-lg shadow-purple-900/5 flex flex-col justify-between">
+        <div className="lg:col-span-5 xl:col-span-4 bg-[#fbf7fe] rounded-3xl p-5 border border-[#e2d0fa] shadow-lg shadow-purple-900/5 flex flex-col justify-between">
           {/* Top Row: Purple Balance Pill + 2 Lime Green Action Buttons */}
           <div className="flex items-center justify-between gap-3">
             {/* Balance Pill with Purple Header */}
-            <div className="bg-[#f8f6ff] border border-[#efe8fc] rounded-2xl p-3 flex-1">
+            <div className="bg-[#f8f2fe] border border-[#e2d0fa] rounded-2xl p-3 flex-1">
               <div className="inline-block bg-[#6c28f5] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md uppercase tracking-wider mb-1">
                 Leads Pool
               </div>
@@ -128,7 +128,7 @@ export const HeroWidgetsRow: React.FC<HeroWidgetsRowProps> = ({
           </div>
 
           {/* Bottom Card: "Your Address / Campaign Details" from PNG */}
-          <div className="mt-3.5 bg-[#f8f6ff] rounded-2xl p-3 border border-[#efe8fc] text-xs">
+          <div className="mt-3.5 bg-[#f8f2fe] rounded-2xl p-3 border border-[#e2d0fa] text-xs">
             <div className="flex items-center justify-between text-[#7c7896] mb-1">
               <span className="font-semibold text-[11px]">Calling Session</span>
               <button
@@ -143,18 +143,18 @@ export const HeroWidgetsRow: React.FC<HeroWidgetsRowProps> = ({
               <Calendar className="w-3.5 h-3.5 text-[#6c28f5]" />
               <span>Date: {callingDate} • Active Shift</span>
             </div>
-            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#efe8fc]">
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#e2d0fa]">
               <button
                 type="button"
                 onClick={() => onNavigateTab('callers')}
-                className="px-2.5 py-1 bg-white hover:bg-[#f3efff] text-[#1e1b4b] border border-[#efe8fc] rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-[#fbf7fe] hover:bg-[#efe0fc] text-[#1e1b4b] border border-[#e2d0fa] rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
               >
                 Callers ({callersCount})
               </button>
               <button
                 type="button"
                 onClick={() => onNavigateTab('reports')}
-                className="px-2.5 py-1 bg-white hover:bg-[#f3efff] text-[#1e1b4b] border border-[#efe8fc] rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
+                className="px-2.5 py-1 bg-[#fbf7fe] hover:bg-[#efe0fc] text-[#1e1b4b] border border-[#e2d0fa] rounded-lg text-[11px] font-semibold transition-colors cursor-pointer"
               >
                 Reports
               </button>
@@ -184,7 +184,7 @@ export const HeroWidgetsRow: React.FC<HeroWidgetsRowProps> = ({
                 className={`flex flex-col items-center justify-center p-3.5 rounded-2xl transition-all cursor-pointer text-center ${
                   isSelected
                     ? 'bg-[#6c28f5] text-white shadow-lg shadow-purple-600/30 scale-[1.02]'
-                    : 'bg-white hover:bg-[#fbf9ff] border border-[#efe8fc] text-[#1e1b4b]'
+                    : 'bg-[#fbf7fe] hover:bg-[#f3e9fd] border border-[#e2d0fa] text-[#1e1b4b]'
                 }`}
               >
                 <div

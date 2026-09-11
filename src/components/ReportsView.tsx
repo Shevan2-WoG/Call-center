@@ -43,7 +43,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header & 12-Sheet Export Action */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <span className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center shadow-xs">
@@ -79,7 +79,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-3xl border border-[#efe8fc] shadow-sm">
+        <div className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm">
           <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
             Total Assigned
           </span>
@@ -87,7 +87,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           <span className="text-[11px] text-[#7c7896] mt-0.5 block font-medium">Contacts distributed</span>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#efe8fc] shadow-sm">
+        <div className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm">
           <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
             Calls Attempted
           </span>
@@ -95,7 +95,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           <span className="text-[11px] text-[#7c7896] mt-0.5 block font-medium">Recorded in database</span>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#efe8fc] shadow-sm">
+        <div className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm">
           <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
             Completed Contacts
           </span>
@@ -103,7 +103,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           <span className="text-[11px] text-[#7c7896] mt-0.5 block font-medium">With final feedback</span>
         </div>
 
-        <div className="bg-white p-5 rounded-3xl border border-[#efe8fc] shadow-sm">
+        <div className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm">
           <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
             Pending Contacts
           </span>
@@ -113,8 +113,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       </div>
 
       {/* Breakdown of Call Outcomes */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex items-center justify-between">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex items-center justify-between">
           <div>
             <h3 className="text-sm font-black text-[#1e1b4b] flex items-center gap-2">
               <PieChart className="w-4 h-4 text-[#6c28f5]" />
@@ -138,7 +138,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               return (
                 <div
                   key={outcome}
-                  className="p-3.5 rounded-2xl border border-[#efe8fc] bg-[#fbf9ff] hover:bg-[#f3efff]/50 transition-colors"
+                  className="p-3.5 rounded-2xl border border-[#e2d0fa] bg-[#f8f2fe] hover:bg-[#efe0fc] transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#1e1b4b] truncate" title={outcome}>
@@ -160,8 +160,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       </div>
 
       {/* Caller Performance Table */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex items-center justify-between">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-[#6c28f5]" />
             <span className="font-black text-sm text-[#1e1b4b]">Caller Performance Ledger</span>
@@ -173,7 +173,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#fbf9ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px] tracking-wider">
+            <thead className="bg-[#f8f2fe] border-b border-[#e2d0fa] text-[#7c7896] uppercase font-bold text-[11px] tracking-wider">
               <tr>
                 <th className="p-3.5 pl-5">Caller Name</th>
                 <th className="p-3.5">WhatsApp Number</th>
@@ -184,7 +184,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 <th className="p-3.5 pr-5">Completion Rate</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#efe8fc]">
+            <tbody className="divide-y divide-[#e2d0fa]">
               {summary.callerPerformance.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-[#7c7896] font-medium">
@@ -193,7 +193,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 </tr>
               ) : (
                 summary.callerPerformance.map((cp) => (
-                  <tr key={cp.callerId} className="hover:bg-[#fbf9ff] transition-colors">
+                  <tr key={cp.callerId} className="hover:bg-[#f3e9fd] transition-colors">
                     <td className="p-3.5 pl-5 font-bold text-[#1e1b4b]">{cp.callerName}</td>
                     <td className="p-3.5 font-mono text-[#7c7896] font-medium">{cp.whatsappNumber}</td>
                     <td className="p-3.5 font-bold text-[#1e1b4b]">{cp.assigned}</td>
@@ -202,7 +202,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                     <td className="p-3.5 font-bold text-[#ffb800]">{cp.pending}</td>
                     <td className="p-3.5 pr-5">
                       <div className="flex items-center gap-2">
-                        <div className="w-20 bg-[#efe8fc] rounded-full h-2 overflow-hidden">
+                        <div className="w-20 bg-[#dfcafa] rounded-full h-2 overflow-hidden">
                           <div
                             className="bg-[#88d600] h-2 rounded-full"
                             style={{ width: `${cp.completionRate}%` }}
@@ -220,24 +220,24 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       </div>
 
       {/* 12-Sheet Structure Documentation */}
-      <div className="bg-[#fbf9ff] border border-[#efe8fc] rounded-3xl p-6 text-xs">
+      <div className="bg-[#f8f2fe] border border-[#e2d0fa] rounded-3xl p-6 text-xs">
         <h4 className="font-black text-[#1e1b4b] mb-3 flex items-center gap-2">
           <Layers className="w-4 h-4 text-[#6c28f5]" />
           Included Workbook Sheets (Automated 12-Sheet Generation):
         </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 text-[#1e1b4b] font-medium">
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">1. Summary</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">2. Available</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">3. Unavailable</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">4. Recall</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">5. Phone Off</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">6. No Answer</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">7. Busy</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">8. Not Interested</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">9. Wrong Number</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">10. Follow Up</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">11. Call History</span>
-          <span className="p-2.5 bg-white rounded-xl border border-[#efe8fc] shadow-xs">12. Caller Performance</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">1. Summary</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">2. Available</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">3. Unavailable</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">4. Recall</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">5. Phone Off</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">6. No Answer</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">7. Busy</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">8. Not Interested</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">9. Wrong Number</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">10. Follow Up</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">11. Call History</span>
+          <span className="p-2.5 bg-[#fbf7fe] rounded-xl border border-[#e2d0fa] shadow-xs">12. Caller Performance</span>
         </div>
       </div>
     </div>

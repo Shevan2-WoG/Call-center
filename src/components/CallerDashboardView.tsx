@@ -43,7 +43,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
 
   if (!currentCaller) {
     return (
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-12 text-center max-w-xl mx-auto my-8 shadow-sm">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-12 text-center max-w-xl mx-auto my-8 shadow-sm">
         <div className="w-14 h-14 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center mx-auto mb-4 shadow-xs">
           <Headset className="w-7 h-7" />
         </div>
@@ -89,8 +89,8 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Agent Workspace Banner & Workload Tracker */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#efe8fc]">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#e2d0fa]">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-[#6c28f5] text-white flex items-center justify-center shadow-md shadow-purple-600/25">
               <Headset className="w-6 h-6" />
@@ -111,13 +111,13 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
 
           {/* Quick Caller Switcher */}
           {onSwitchCaller && allCallers.length > 1 && (
-            <div className="flex items-center gap-2 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl p-1.5 self-start md:self-auto">
+            <div className="flex items-center gap-2 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl p-1.5 self-start md:self-auto">
               <span className="text-xs text-[#7c7896] font-bold pl-1">Switch Agent:</span>
               <select
                 value={currentCaller.id}
                 onChange={(e) => onSwitchCaller(e.target.value)}
                 aria-label="Switch Agent"
-                className="bg-white text-xs font-bold text-[#1e1b4b] border border-[#efe8fc] rounded-lg px-2.5 py-1 outline-none cursor-pointer"
+                className="bg-[#fbf7fe] text-xs font-bold text-[#1e1b4b] border border-[#e2d0fa] rounded-lg px-2.5 py-1 outline-none cursor-pointer"
               >
                 {allCallers.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -131,7 +131,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
 
         {/* Workload Metrics: Total, Completed, Pending, Follow-ups */}
         <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-[#fbf9ff] p-4 rounded-2xl border border-[#efe8fc]">
+          <div className="bg-[#f5ecfd] p-4 rounded-2xl border border-[#e2d0fa]">
             <span className="text-[11px] font-bold text-[#7c7896] uppercase tracking-wider">
               Total Assigned
             </span>
@@ -161,12 +161,12 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
         </div>
 
         {/* Work Progress Bar */}
-        <div className="mt-5 bg-[#fbf9ff] p-4 rounded-2xl border border-[#efe8fc]">
+        <div className="mt-5 bg-[#f5ecfd] p-4 rounded-2xl border border-[#e2d0fa]">
           <div className="flex items-center justify-between text-xs font-bold text-[#1e1b4b] mb-2">
             <span>Overall Workload Progress</span>
             <span className="font-black text-[#6c28f5]">{progressPercent}%</span>
           </div>
-          <div className="w-full bg-[#efe8fc] rounded-full h-3 overflow-hidden p-0.5">
+          <div className="w-full bg-[#dfcafa] rounded-full h-3 overflow-hidden p-0.5">
             <div
               className="bg-[#6c28f5] h-2 rounded-full transition-all duration-500 shadow-xs"
               style={{ width: `${progressPercent}%` }}
@@ -176,9 +176,9 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
       </div>
 
       {/* Assigned Contacts List & Calling Actions */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
         {/* Filter bar */}
-        <div className="p-4 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto">
             <button
               type="button"
@@ -186,7 +186,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === 'pending'
                   ? 'bg-[#ffb800] text-white shadow-xs'
-                  : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
               }`}
             >
               Pending Calls ({pendingCount})
@@ -197,7 +197,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === 'completed'
                   ? 'bg-[#88d600] text-white shadow-xs'
-                  : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
               }`}
             >
               Completed ({completedCount})
@@ -208,7 +208,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === 'followup'
                   ? 'bg-[#ff2a85] text-white shadow-xs'
-                  : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
               }`}
             >
               Follow-ups ({followUpCount})
@@ -219,7 +219,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 filterTab === 'all'
                   ? 'bg-[#6c28f5] text-white shadow-xs'
-                  : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
               }`}
             >
               All Assigned ({totalAssigned})
@@ -234,13 +234,13 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search assigned contacts..."
-              className="pl-8 pr-3 py-1.5 text-xs bg-white border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] w-full sm:w-56 font-medium text-[#1e1b4b]"
+              className="pl-8 pr-3 py-1.5 text-xs bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white w-full sm:w-56 font-medium text-[#1e1b4b]"
             />
           </div>
         </div>
 
         {/* Contacts Roster */}
-        <div className="divide-y divide-[#efe8fc]">
+        <div className="divide-y divide-[#e2d0fa]">
           {filteredAssignments.length === 0 ? (
             <div className="text-center py-12 text-[#7c7896] text-xs font-medium">
               {totalAssigned === 0
@@ -258,7 +258,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                 <div
                   key={asg.id}
                   className={`p-4 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                    isCompleted ? 'bg-[#faf8ff]/60' : 'hover:bg-[#faf8ff] bg-white'
+                    isCompleted ? 'bg-[#f8f2fe]/70' : 'hover:bg-[#f3e9fd] bg-[#fbf7fe]'
                   }`}
                 >
                   <div className="space-y-1">

@@ -29,8 +29,8 @@ export const ContactHistoryModal: React.FC<ContactHistoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#efe8fc] animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-start justify-between pb-4 border-b border-[#efe8fc]">
+      <div className="bg-[#fbf7fe] rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-[#e2d0fa] animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-start justify-between pb-4 border-b border-[#e2d0fa]">
           <div>
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center shadow-xs">
@@ -72,14 +72,14 @@ export const ContactHistoryModal: React.FC<ContactHistoryModalProps> = ({
                 return (
                   <div
                     key={attempt.id}
-                    className="relative pl-6 pb-2 border-l-2 border-[#efe8fc] last:border-transparent"
+                    className="relative pl-6 pb-2 border-l-2 border-[#e2d0fa] last:border-transparent"
                   >
                     {/* Number dot */}
                     <div className="absolute -left-2.5 top-0 w-5 h-5 rounded-full bg-[#6c28f5] text-white text-[10px] font-bold flex items-center justify-center shadow-xs">
                       {index + 1}
                     </div>
 
-                    <div className="bg-[#fbf9ff] border border-[#efe8fc] rounded-2xl p-3.5 space-y-2 text-xs">
+                    <div className="bg-[#f8f2fe] border border-[#e2d0fa] rounded-2xl p-3.5 space-y-2 text-xs">
                       <div className="flex items-start justify-between">
                         <div>
                           <span className="font-black text-[#1e1b4b] text-sm">
@@ -100,7 +100,7 @@ export const ContactHistoryModal: React.FC<ContactHistoryModalProps> = ({
                       </div>
 
                       {attempt.comment && (
-                        <div className="bg-white p-3 rounded-xl border border-[#efe8fc] text-[#1e1b4b] text-xs leading-relaxed font-medium">
+                        <div className="bg-[#fbf7fe] p-3 rounded-xl border border-[#e2d0fa] text-[#1e1b4b] text-xs leading-relaxed font-medium">
                           <FileText className="w-3 h-3 text-[#6c28f5] inline mr-1" />
                           {attempt.comment}
                         </div>
@@ -130,7 +130,7 @@ export const ContactHistoryModal: React.FC<ContactHistoryModalProps> = ({
           )}
         </div>
 
-        <div className="pt-3 border-t border-[#efe8fc] flex justify-end">
+        <div className="pt-3 border-t border-[#e2d0fa] flex justify-end">
           <button
             type="button"
             onClick={onClose}

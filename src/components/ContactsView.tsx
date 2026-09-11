@@ -155,8 +155,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Excel Upload & Management Hero Card */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
               <FileSpreadsheet className="w-5 h-5 text-[#6c28f5]" />
@@ -182,7 +182,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             <button
               type="button"
               onClick={downloadExcelTemplate}
-              className="px-3.5 py-2 rounded-xl border border-[#efe8fc] bg-white hover:bg-[#f8f6ff] text-[#1e1b4b] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl border border-[#e2d0fa] bg-[#f8f2fe] hover:bg-[#f3e9fd] text-[#1e1b4b] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 text-[#6c28f5]" />
               Excel Template
@@ -210,7 +210,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
           {/* Upload Dropzone */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-[#d8cbff] hover:border-[#6c28f5] rounded-3xl p-7 text-center cursor-pointer bg-[#faf8ff] hover:bg-[#f3efff] transition-all group"
+            className="border-2 border-dashed border-[#cbaff8] hover:border-[#6c28f5] rounded-3xl p-7 text-center cursor-pointer bg-[#f8f2fe] hover:bg-[#f1e4fc] transition-all group"
           >
             <input
               ref={fileInputRef}
@@ -236,8 +236,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
           {/* Import Preview Modal / Container if parsed */}
           {parseResult && (
-            <div className="mt-6 bg-[#f8f6ff] border border-[#efe8fc] rounded-3xl p-5 shadow-xs">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#efe8fc]">
+            <div className="mt-6 bg-[#f8f2fe] border border-[#e2d0fa] rounded-3xl p-5 shadow-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#e2d0fa]">
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-black text-[#1e1b4b]">
@@ -285,7 +285,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                     previewTab === 'valid'
                       ? 'bg-[#6c28f5] text-white shadow-xs'
-                      : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                      : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
                   }`}
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                       previewTab === 'duplicates'
                         ? 'bg-[#ffb800] text-white shadow-xs'
-                        : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                        : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
                     }`}
                   >
                     <AlertTriangle className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
                       previewTab === 'invalid'
                         ? 'bg-[#ff2a85] text-white shadow-xs'
-                        : 'bg-white text-[#1e1b4b] border border-[#efe8fc] hover:bg-[#f3efff]'
+                        : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
                     }`}
                   >
                     <XCircle className="w-3.5 h-3.5" />
@@ -324,10 +324,10 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               </div>
 
               {/* Preview Table */}
-              <div className="bg-white rounded-2xl border border-[#efe8fc] overflow-x-auto max-h-60">
+              <div className="bg-[#fbf7fe] rounded-2xl border border-[#e2d0fa] overflow-x-auto max-h-60">
                 {previewTab === 'valid' && (
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-[#f8f6ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px]">
+                    <thead className="bg-[#f8f2fe] border-b border-[#e2d0fa] text-[#7c7896] uppercase font-bold text-[11px]">
                       <tr>
                         <th className="p-3">Name</th>
                         <th className="p-3">Original Phone</th>
@@ -337,9 +337,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                         <th className="p-3">Notes</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#efe8fc]">
+                    <tbody className="divide-y divide-[#e2d0fa]">
                       {parseResult.valid.map((c, i) => (
-                        <tr key={i} className="hover:bg-[#faf8ff]">
+                        <tr key={i} className="hover:bg-[#f3e9fd]">
                           <td className="p-3 font-bold text-[#1e1b4b]">{c.name}</td>
                           <td className="p-3 font-mono text-[#7c7896]">{c.phone}</td>
                           <td className="p-3 font-mono text-[#6c28f5] font-bold">
@@ -426,9 +426,9 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       </div>
 
       {/* Existing Contacts Database Table */}
-      <div className="bg-white rounded-3xl border border-[#efe8fc] shadow-sm overflow-hidden">
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
         {/* Table Controls */}
-        <div className="p-4 border-b border-[#efe8fc] bg-[#fbf9ff] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="font-black text-sm text-[#1e1b4b]">Database Contacts</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] font-bold border border-[#e8e1f9]">
@@ -445,12 +445,12 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search name, phone, location..."
-                className="pl-8 pr-3 py-1.5 text-xs bg-white border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] w-48 sm:w-60 font-medium text-[#1e1b4b]"
+                className="pl-8 pr-3 py-1.5 text-xs bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white w-48 sm:w-60 font-medium text-[#1e1b4b]"
               />
             </div>
 
             {/* Category Filter */}
-            <div className="flex items-center gap-1 bg-white border border-[#efe8fc] rounded-xl px-2 py-1.5 text-xs">
+            <div className="flex items-center gap-1 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2 py-1.5 text-xs">
               <Filter className="w-3 h-3 text-[#7c7896]" />
               <select
                 value={filterCategory}
@@ -472,7 +472,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               aria-label="Filter by Status"
-              className="bg-white border border-[#efe8fc] rounded-xl px-2.5 py-1.5 text-xs outline-none cursor-pointer text-[#1e1b4b] font-semibold"
+              className="bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2.5 py-1.5 text-xs outline-none cursor-pointer text-[#1e1b4b] font-semibold"
             >
               <option value="all">All Statuses</option>
               <option value="unassigned">Unassigned</option>
@@ -484,7 +484,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               type="button"
               onClick={onRefresh}
               title="Refresh database records"
-              className="p-1.5 rounded-xl border border-[#efe8fc] hover:bg-[#f3efff] text-[#6c28f5] transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl border border-[#e2d0fa] hover:bg-[#f3efff] text-[#6c28f5] transition-colors cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
@@ -494,7 +494,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
         {/* Contacts Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-[#f8f6ff] border-b border-[#efe8fc] text-[#7c7896] uppercase font-bold text-[11px]">
+            <thead className="bg-[#ede0fc] border-b border-[#dfcafa] text-[#4e0fb8] uppercase font-black text-[11px]">
               <tr>
                 <th className="p-3">#</th>
                 <th className="p-3">Name</th>
@@ -507,7 +507,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 {onDeleteContact && <th className="p-3 text-right">Action</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#efe8fc]">
+            <tbody className="divide-y divide-[#e2d0fa]">
               {filteredContacts.length === 0 ? (
                 <tr>
                   <td colSpan={onDeleteContact ? 9 : 8} className="p-12 text-center">
@@ -552,7 +552,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     pending: 'bg-[#ff2a85]/15 text-[#ff2a85] border-[#ff2a85]/30',
                   };
                   return (
-                    <tr key={contact.id} className="hover:bg-[#faf8ff] transition-colors">
+                    <tr key={contact.id} className="hover:bg-[#f4eafd] bg-[#fbf7fe] transition-colors">
                       <td className="p-3 text-[#7c7896] font-mono">{index + 1}</td>
                       <td className="p-3 font-bold text-[#1e1b4b]">{contact.name}</td>
                       <td className="p-3 font-mono text-[#6c28f5] font-bold flex items-center gap-1.5">
@@ -613,8 +613,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
 
       {/* Manual Add Contact Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-[#1e1b4b]/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#efe8fc] relative">
+        <div className="fixed inset-0 z-50 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#fbf7fe] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#e2d0fa] relative">
             <button
               type="button"
               onClick={resetManualForm}
@@ -651,7 +651,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   onChange={(e) => setManualName(e.target.value)}
                   placeholder="e.g. John Mukasa"
                   required
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                 />
               </div>
 
@@ -665,7 +665,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   onChange={(e) => setManualPhone(e.target.value)}
                   placeholder="e.g. +256701234567 or 0701234567"
                   required
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-mono font-medium transition-all"
                 />
                 <p className="text-[11px] text-[#7c7896] mt-1 font-medium">Numbers will be normalized to international E.164 format.</p>
               </div>
@@ -678,7 +678,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     value={manualLocation}
                     onChange={(e) => setManualLocation(e.target.value)}
                     placeholder="e.g. Kampala"
-                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                    className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
                 <div>
@@ -688,7 +688,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     value={manualCategory}
                     onChange={(e) => setManualCategory(e.target.value)}
                     placeholder="e.g. General, VIP"
-                    className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
+                    className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] font-medium transition-all"
                   />
                 </div>
               </div>
@@ -700,11 +700,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   value={manualNotes}
                   onChange={(e) => setManualNotes(e.target.value)}
                   placeholder="Context, background, preferred calling time..."
-                  className="w-full px-3.5 py-2.5 bg-[#fbf9ff] border border-[#efe8fc] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] resize-none font-medium transition-all"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white text-[#1e1b4b] resize-none font-medium transition-all"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#efe8fc]">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#e2d0fa]">
                 <button
                   type="button"
                   onClick={resetManualForm}
