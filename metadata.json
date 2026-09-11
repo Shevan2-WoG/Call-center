@@ -1,5 +1,5 @@
 {
-  "name": "Call Center Contact Distribution & Feedback System",
+  "name": "KIU Manifest Call Center Hub",
   "description": "A web-based call-center contact distribution, WhatsApp dispatch, and feedback logging platform owned by Muhindo, developed by Arnible.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

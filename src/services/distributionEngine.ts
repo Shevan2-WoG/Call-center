@@ -108,7 +108,7 @@ export function formatWhatsAppAssignmentMessage(
   callingDate: string,
   assignedContacts: { name: string; phone: string; location?: string; category?: string; notes?: string }[]
 ): string {
-  const header = `📞 *MUHINDO CALL CENTER ASSIGNMENTS*\n` +
+  const header = `📞 *KIU MANIFEST CALL CENTER ASSIGNMENTS*\n` +
     `📅 Date: ${callingDate}\n` +
     `👤 Caller: ${callerName}\n` +
     `📊 Workload: ${assignedContacts.length} Contacts assigned\n` +

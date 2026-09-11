@@ -580,7 +580,7 @@ export function downloadExcelTemplate() {
 
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts_Template');
-  XLSX.writeFile(workbook, 'Muhindo_Contact_Import_Template.xlsx');
+  XLSX.writeFile(workbook, 'KIU_Manifest_Contact_Import_Template.xlsx');
 }
 
 /**
@@ -708,5 +708,5 @@ export function exportDaily12SheetReport(
   XLSX.utils.book_append_sheet(workbook, sheet12, 'Caller Performance');
 
   // Download the workbook
-  XLSX.writeFile(workbook, `Muhindo_Call_Center_Daily_Report_${callingDate}.xlsx`);
+  XLSX.writeFile(workbook, `KIU_Manifest_Call_Center_Daily_Report_${callingDate}.xlsx`);
 }

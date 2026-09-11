@@ -440,7 +440,7 @@ export default function App() {
       <footer className="bg-[#240c54] border-t border-[#3b1580] py-4 text-xs text-purple-200/80">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-white">Muhindo Call Center</span>
+            <span className="font-bold text-white">KIU Manifest Call Center Hub</span>
             <span className="text-purple-400">•</span>
             <span className="text-purple-200">
               Owned by <strong className="text-white font-semibold">Muhindo</strong>

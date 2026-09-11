@@ -176,7 +176,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-black text-[#1e1b4b]">{currentCaller.name}</h2>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa]">
-                  Muhindo Agent Workspace
+                  KIU Manifest Agent Workspace
                 </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
