@@ -52,14 +52,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-black text-[#1e1b4b]">
-                  Daily Call Center Report
+                  Muhindo Daily Call Center Report
                 </h2>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9]">
                   {callingDate}
                 </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                Consolidated call outcomes, agent performance statistics, and automated 12-sheet Excel reporting.
+                Consolidated call outcomes & agent performance statistics • Owned by <strong className="text-[#1e1b4b]">Muhindo</strong> • Developed by <strong className="text-[#6c28f5]">Arnible</strong>
               </p>
             </div>
           </div>

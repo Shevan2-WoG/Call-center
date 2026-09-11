@@ -38,8 +38,9 @@ import { ReportsView } from './components/ReportsView';
 import { AuditView } from './components/AuditView';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentRole, setCurrentRole] = useState<UserRole>('admin');
+  const [activePortal, setActivePortal] = useState<'admin' | 'caller'>('admin');
+  const [adminTab, setAdminTab] = useState<string>('dashboard');
+  const [callerSubTab, setCallerSubTab] = useState<'queue' | 'performance' | 'history'>('queue');
   const [callingDate, setCallingDate] = useState('2026-09-09');
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -295,16 +296,17 @@ export default function App() {
     }
   };
 
-  // Switch to specific caller view
+  // Switch to specific caller in the Caller Portal
   const handleSwitchToCaller = (callerId: string) => {
     setSelectedCallerId(callerId);
-    setCurrentRole('caller');
-    setActiveTab('caller_dashboard');
+    setActivePortal('caller');
+    setCallerSubTab('queue');
   };
 
   const handleTriggerReassignment = (caller: Caller) => {
     setReassignmentTargetCallerId(caller.id);
-    setActiveTab('reassignment');
+    setActivePortal('admin');
+    setAdminTab('reassignment');
   };
 
   // Active caller for Caller Dashboard
@@ -314,15 +316,19 @@ export default function App() {
     <div className="min-h-screen bg-[#ebdffc] text-[#1e1b4b] flex flex-col font-sans selection:bg-[#6c28f5] selection:text-white">
       {/* Navigation & Header */}
       <Navbar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        currentRole={currentRole}
-        setCurrentRole={setCurrentRole}
+        activePortal={activePortal}
+        setActivePortal={setActivePortal}
+        adminTab={adminTab}
+        setAdminTab={setAdminTab}
+        callerSubTab={callerSubTab}
+        setCallerSubTab={setCallerSubTab}
         callingDate={callingDate}
         setCallingDate={setCallingDate}
         selectedCallerId={selectedCallerId}
         setSelectedCallerId={setSelectedCallerId}
-        callers={callers.map((c) => ({ id: c.id, name: c.name }))}
+        callers={callers}
+        currentCaller={currentCaller}
+        onSaveCaller={handleSaveCaller}
         onResetData={handleResetDemoData}
         onEmptyData={handleEmptyAllData}
         isSyncing={isSyncing}
@@ -330,48 +336,76 @@ export default function App() {
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {activeTab === 'dashboard' && (
-          <DistributionView
-            contacts={contacts}
-            callers={callers}
-            assignments={assignments}
-            callingDate={callingDate}
-            onDistribute={handleDistribute}
-            onSwitchToCaller={handleSwitchToCaller}
-          />
+        {/* ==================== ADMIN PORTAL VIEWS ==================== */}
+        {activePortal === 'admin' && (
+          <>
+            {adminTab === 'dashboard' && (
+              <DistributionView
+                contacts={contacts}
+                callers={callers}
+                assignments={assignments}
+                callingDate={callingDate}
+                onDistribute={handleDistribute}
+                onSwitchToCaller={handleSwitchToCaller}
+              />
+            )}
+
+            {adminTab === 'contacts' && (
+              <ContactsView
+                contacts={contacts}
+                onImportContacts={handleImportContacts}
+                onDeleteContact={handleDeleteContact}
+                onRefresh={loadData}
+              />
+            )}
+
+            {adminTab === 'callers' && (
+              <CallerTeamView
+                callers={callers}
+                callingDate={callingDate}
+                onSaveCaller={handleSaveCaller}
+                onDeleteCaller={handleDeleteCaller}
+                onTriggerReassignment={handleTriggerReassignment}
+                onSwitchToCaller={handleSwitchToCaller}
+              />
+            )}
+
+            {adminTab === 'reassignment' && (
+              <ReassignmentView
+                callers={callers}
+                assignments={assignments}
+                callingDate={callingDate}
+                reassignments={reassignments}
+                onExecuteReassignment={handleExecuteReassignment}
+                preselectedCallerId={reassignmentTargetCallerId}
+              />
+            )}
+
+            {adminTab === 'reports' && (
+              <ReportsView
+                callingDate={callingDate}
+                assignments={assignments}
+                attempts={attempts}
+                callers={callers}
+              />
+            )}
+
+            {adminTab === 'audit' && (
+              <AuditView
+                logs={auditLogs}
+                counts={{
+                  contacts: contacts.length,
+                  callers: callers.length,
+                  assignments: assignments.length,
+                  attempts: attempts.length,
+                }}
+              />
+            )}
+          </>
         )}
 
-        {activeTab === 'contacts' && (
-          <ContactsView
-            contacts={contacts}
-            onImportContacts={handleImportContacts}
-            onDeleteContact={handleDeleteContact}
-            onRefresh={loadData}
-          />
-        )}
-
-        {activeTab === 'callers' && (
-          <CallerTeamView
-            callers={callers}
-            callingDate={callingDate}
-            onSaveCaller={handleSaveCaller}
-            onDeleteCaller={handleDeleteCaller}
-            onTriggerReassignment={handleTriggerReassignment}
-          />
-        )}
-
-        {activeTab === 'reassignment' && (
-          <ReassignmentView
-            callers={callers}
-            assignments={assignments}
-            callingDate={callingDate}
-            reassignments={reassignments}
-            onExecuteReassignment={handleExecuteReassignment}
-            preselectedCallerId={reassignmentTargetCallerId}
-          />
-        )}
-
-        {activeTab === 'caller_dashboard' && (
+        {/* ==================== CALLER PORTAL VIEW ==================== */}
+        {activePortal === 'caller' && (
           currentCaller ? (
             <CallerDashboardView
               currentCaller={currentCaller}
@@ -381,42 +415,41 @@ export default function App() {
               onSaveAttempt={handleSaveAttempt}
               allCallers={callers}
               onSwitchCaller={setSelectedCallerId}
+              onSaveCaller={handleSaveCaller}
+              activeSubTab={callerSubTab}
+              onSubTabChange={setCallerSubTab}
             />
           ) : (
             <div className="p-8 text-center bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm">
               <p className="text-sm text-[#7c7896] font-medium">
-                No callers registered in the system yet. Please register callers in the "Daily Callers" tab first.
+                No callers registered in the system yet. Please switch to the Admin Portal and register callers in the "Daily Callers Fleet" tab first.
               </p>
+              <button
+                type="button"
+                onClick={() => setActivePortal('admin')}
+                className="mt-4 px-4 py-2 bg-[#6c28f5] text-white text-xs font-bold rounded-xl shadow-md cursor-pointer"
+              >
+                Go to Admin Portal
+              </button>
             </div>
           )
-        )}
-
-        {activeTab === 'reports' && (
-          <ReportsView
-            callingDate={callingDate}
-            assignments={assignments}
-            attempts={attempts}
-            callers={callers}
-          />
-        )}
-
-        {activeTab === 'audit' && (
-          <AuditView
-            logs={auditLogs}
-            counts={{
-              contacts: contacts.length,
-              callers: callers.length,
-              assignments: assignments.length,
-              attempts: attempts.length,
-            }}
-          />
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-[#240c54] border-t border-[#3b1580] py-4 text-center text-xs text-purple-200/80">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span className="font-medium">Call Center Contact Distribution & Feedback System • MVP v1.0</span>
+      <footer className="bg-[#240c54] border-t border-[#3b1580] py-4 text-xs text-purple-200/80">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-white">Muhindo Call Center</span>
+            <span className="text-purple-400">•</span>
+            <span className="text-purple-200">
+              Owned by <strong className="text-white font-semibold">Muhindo</strong>
+            </span>
+            <span className="text-purple-400">•</span>
+            <span className="text-purple-200">
+              Developed by <strong className="text-[#88d600] font-bold">Arnible</strong>
+            </span>
+          </div>
           <span className="font-mono text-[11px] text-purple-300">
             Database: Cloud Firestore ({assignments.length} assignments, {attempts.length} attempts)
           </span>

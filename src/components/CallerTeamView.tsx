@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Target,
   Plus,
+  Headset,
 } from 'lucide-react';
 
 interface CallerTeamViewProps {
@@ -22,6 +23,7 @@ interface CallerTeamViewProps {
   onSaveCaller: (caller: Caller) => Promise<void>;
   onDeleteCaller: (id: string) => Promise<void>;
   onTriggerReassignment: (caller: Caller) => void;
+  onSwitchToCaller?: (callerId: string) => void;
 }
 
 export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
@@ -30,6 +32,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
   onSaveCaller,
   onDeleteCaller,
   onTriggerReassignment,
+  onSwitchToCaller,
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingCaller, setEditingCaller] = useState<Caller | null>(null);
@@ -295,6 +298,17 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-1">
+                  {onSwitchToCaller && (
+                    <button
+                      type="button"
+                      onClick={() => onSwitchToCaller(caller.id)}
+                      className="px-2.5 py-1 text-[11px] font-bold text-[#6c28f5] hover:bg-[#6c28f5] hover:text-white bg-[#f3efff] rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                      title="Open this agent's Caller Portal workspace"
+                    >
+                      <Headset className="w-3 h-3" />
+                      <span>Open Portal</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleOpenEdit(caller)}

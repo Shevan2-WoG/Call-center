@@ -108,7 +108,7 @@ export function formatWhatsAppAssignmentMessage(
   callingDate: string,
   assignedContacts: { name: string; phone: string; location?: string; category?: string; notes?: string }[]
 ): string {
-  const header = `📞 *CALL CENTER ASSIGNMENTS*\n` +
+  const header = `📞 *MUHINDO CALL CENTER ASSIGNMENTS*\n` +
     `📅 Date: ${callingDate}\n` +
     `👤 Caller: ${callerName}\n` +
     `📊 Workload: ${assignedContacts.length} Contacts assigned\n` +
@@ -130,7 +130,8 @@ export function formatWhatsAppAssignmentMessage(
   }).join('\n');
 
   const footer = `\n━━━━━━━━━━━━━━━━━━━━\n` +
-    `✅ Please login to your Agent Dashboard to record call outcomes immediately after each call!\n` +
+    `✅ Please login to your Caller Portal to record call outcomes immediately after each call!\n` +
+    `🏢 Operations Owner: Muhindo • Platform: Arnible\n` +
     `Good luck with today's calls!`;
 
   return header + body + footer;
