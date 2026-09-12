@@ -36,9 +36,21 @@ import { CallerDashboardView } from './components/CallerDashboardView';
 import { ReassignmentView } from './components/ReassignmentView';
 import { ReportsView } from './components/ReportsView';
 import { AuditView } from './components/AuditView';
+import { HomeView } from './components/HomeView';
+import { AdminLoginModal } from './components/AdminLoginModal';
+import { Lock } from 'lucide-react';
 
 export default function App() {
-  const [activePortal, setActivePortal] = useState<'admin' | 'caller'>('admin');
+  const [activeView, setActiveView] = useState<'home' | 'caller' | 'admin'>('home');
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('kiu_admin_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
+
   const [adminTab, setAdminTab] = useState<string>('dashboard');
   const [callerSubTab, setCallerSubTab] = useState<'queue' | 'performance' | 'history'>('queue');
   const [callingDate, setCallingDate] = useState('2026-09-09');
@@ -299,25 +311,60 @@ export default function App() {
   // Switch to specific caller in the Caller Portal
   const handleSwitchToCaller = (callerId: string) => {
     setSelectedCallerId(callerId);
-    setActivePortal('caller');
+    setActiveView('caller');
     setCallerSubTab('queue');
   };
 
   const handleTriggerReassignment = (caller: Caller) => {
     setReassignmentTargetCallerId(caller.id);
-    setActivePortal('admin');
+    if (!isAdminAuthenticated) {
+      setIsAdminModalOpen(true);
+      return;
+    }
+    setActiveView('admin');
     setAdminTab('reassignment');
+  };
+
+  const handleAdminBottomClick = () => {
+    if (isAdminAuthenticated) {
+      setActiveView('admin');
+    } else {
+      setIsAdminModalOpen(true);
+    }
+  };
+
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    try {
+      sessionStorage.setItem('kiu_admin_auth', 'true');
+    } catch (e) {
+      console.error(e);
+    }
+    setIsAdminModalOpen(false);
+    setActiveView('admin');
+  };
+
+  const handleLockAdmin = () => {
+    setIsAdminAuthenticated(false);
+    try {
+      sessionStorage.removeItem('kiu_admin_auth');
+    } catch (e) {
+      console.error(e);
+    }
+    setActiveView('home');
   };
 
   // Active caller for Caller Dashboard
   const currentCaller = callers.find((c) => c.id === selectedCallerId) || callers[0];
 
   return (
-    <div className="min-h-screen bg-[#ebdffc] text-[#1e1b4b] flex flex-col font-sans selection:bg-[#6c28f5] selection:text-white">
-      {/* Navigation & Header */}
+    <div className={`min-h-screen ${activeView === 'home' ? 'bg-[#1b0840]' : 'bg-[#ebdffc]'} text-[#1e1b4b] flex flex-col font-sans selection:bg-[#6c28f5] selection:text-white`}>
+      {/* Navigation & Header (Admin removed from top bar) */}
       <Navbar
-        activePortal={activePortal}
-        setActivePortal={setActivePortal}
+        activeView={activeView}
+        setActiveView={setActiveView}
+        onLockAdmin={handleLockAdmin}
+        isAdminAuthenticated={isAdminAuthenticated}
         adminTab={adminTab}
         setAdminTab={setAdminTab}
         callerSubTab={callerSubTab}
@@ -334,79 +381,27 @@ export default function App() {
         isSyncing={isSyncing}
       />
 
-      {/* Main Content Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* ==================== ADMIN PORTAL VIEWS ==================== */}
-        {activePortal === 'admin' && (
-          <>
-            {adminTab === 'dashboard' && (
-              <DistributionView
-                contacts={contacts}
-                callers={callers}
-                assignments={assignments}
-                callingDate={callingDate}
-                onDistribute={handleDistribute}
-                onSwitchToCaller={handleSwitchToCaller}
-              />
-            )}
+      {/* ==================== HOMEPAGE VIEW ==================== */}
+      {activeView === 'home' && (
+        <HomeView
+          onEnterCallerPortal={(callerId) => {
+            if (callerId) setSelectedCallerId(callerId);
+            setActiveView('caller');
+          }}
+          onOpenAdminLogin={handleAdminBottomClick}
+          callers={callers}
+          assignments={assignments}
+          attempts={attempts}
+          callingDate={callingDate}
+          selectedCallerId={selectedCallerId}
+          onSelectCallerId={setSelectedCallerId}
+        />
+      )}
 
-            {adminTab === 'contacts' && (
-              <ContactsView
-                contacts={contacts}
-                onImportContacts={handleImportContacts}
-                onDeleteContact={handleDeleteContact}
-                onRefresh={loadData}
-              />
-            )}
-
-            {adminTab === 'callers' && (
-              <CallerTeamView
-                callers={callers}
-                callingDate={callingDate}
-                onSaveCaller={handleSaveCaller}
-                onDeleteCaller={handleDeleteCaller}
-                onTriggerReassignment={handleTriggerReassignment}
-                onSwitchToCaller={handleSwitchToCaller}
-              />
-            )}
-
-            {adminTab === 'reassignment' && (
-              <ReassignmentView
-                callers={callers}
-                assignments={assignments}
-                callingDate={callingDate}
-                reassignments={reassignments}
-                onExecuteReassignment={handleExecuteReassignment}
-                preselectedCallerId={reassignmentTargetCallerId}
-              />
-            )}
-
-            {adminTab === 'reports' && (
-              <ReportsView
-                callingDate={callingDate}
-                assignments={assignments}
-                attempts={attempts}
-                callers={callers}
-              />
-            )}
-
-            {adminTab === 'audit' && (
-              <AuditView
-                logs={auditLogs}
-                counts={{
-                  contacts: contacts.length,
-                  callers: callers.length,
-                  assignments: assignments.length,
-                  attempts: attempts.length,
-                }}
-              />
-            )}
-          </>
-        )}
-
-        {/* ==================== CALLER PORTAL VIEW ==================== */}
-        {activePortal === 'caller' && (
-          currentCaller ? (
+      {/* ==================== CALLER PORTAL VIEW ==================== */}
+      {activeView === 'caller' && (
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {currentCaller ? (
             <CallerDashboardView
               currentCaller={currentCaller}
               assignments={assignments}
@@ -422,25 +417,99 @@ export default function App() {
           ) : (
             <div className="p-8 text-center bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm">
               <p className="text-sm text-[#7c7896] font-medium">
-                No callers registered in the system yet. Please switch to the Admin Portal and register callers in the "Daily Callers Fleet" tab first.
+                No callers registered in the system yet. Please access the Admin Portal below to configure the daily team.
               </p>
               <button
                 type="button"
-                onClick={() => setActivePortal('admin')}
+                onClick={handleAdminBottomClick}
                 className="mt-4 px-4 py-2 bg-[#6c28f5] text-white text-xs font-bold rounded-xl shadow-md cursor-pointer"
               >
-                Go to Admin Portal
+                Access Admin Portal
               </button>
             </div>
-          )
-        )}
-      </main>
+          )}
+        </main>
+      )}
 
-      {/* Footer */}
+      {/* ==================== ADMIN PORTAL VIEWS (Only if authenticated) ==================== */}
+      {activeView === 'admin' && (
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {adminTab === 'dashboard' && (
+            <DistributionView
+              contacts={contacts}
+              callers={callers}
+              assignments={assignments}
+              callingDate={callingDate}
+              onDistribute={handleDistribute}
+              onSwitchToCaller={handleSwitchToCaller}
+            />
+          )}
+
+          {adminTab === 'contacts' && (
+            <ContactsView
+              contacts={contacts}
+              onImportContacts={handleImportContacts}
+              onDeleteContact={handleDeleteContact}
+              onRefresh={loadData}
+            />
+          )}
+
+          {adminTab === 'callers' && (
+            <CallerTeamView
+              callers={callers}
+              callingDate={callingDate}
+              onSaveCaller={handleSaveCaller}
+              onDeleteCaller={handleDeleteCaller}
+              onTriggerReassignment={handleTriggerReassignment}
+              onSwitchToCaller={handleSwitchToCaller}
+            />
+          )}
+
+          {adminTab === 'reassignment' && (
+            <ReassignmentView
+              callers={callers}
+              assignments={assignments}
+              callingDate={callingDate}
+              reassignments={reassignments}
+              onExecuteReassignment={handleExecuteReassignment}
+              preselectedCallerId={reassignmentTargetCallerId}
+            />
+          )}
+
+          {adminTab === 'reports' && (
+            <ReportsView
+              callingDate={callingDate}
+              assignments={assignments}
+              attempts={attempts}
+              callers={callers}
+            />
+          )}
+
+          {adminTab === 'audit' && (
+            <AuditView
+              logs={auditLogs}
+              counts={{
+                contacts: contacts.length,
+                callers: callers.length,
+                assignments: assignments.length,
+                attempts: attempts.length,
+              }}
+            />
+          )}
+        </main>
+      )}
+
+      {/* Footer with Attribution and Discreet Admin Portal Access */}
       <footer className="bg-[#240c54] border-t border-[#3b1580] py-4 text-xs text-purple-200/80">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-white">KIU Manifest Call Center Hub</span>
+            <button
+              type="button"
+              onClick={() => setActiveView('home')}
+              className="font-bold text-white hover:text-purple-200 transition-colors cursor-pointer text-left"
+            >
+              KIU Manifest Call Center Hub
+            </button>
             <span className="text-purple-400">•</span>
             <span className="text-purple-200">
               Owned by <strong className="text-white font-semibold">Muhindo</strong>
@@ -450,11 +519,36 @@ export default function App() {
               Developed by <strong className="text-[#88d600] font-bold">Arnible</strong>
             </span>
           </div>
-          <span className="font-mono text-[11px] text-purple-300">
-            Database: Cloud Firestore ({assignments.length} assignments, {attempts.length} attempts)
-          </span>
+
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="font-mono text-[11px] text-purple-300">
+              Firestore ({assignments.length} assignments, {attempts.length} attempts)
+            </span>
+
+            {/* Discreet Admin Portal Access Button */}
+            <button
+              type="button"
+              onClick={handleAdminBottomClick}
+              className="inline-flex items-center gap-1.5 text-purple-200 hover:text-white transition-all cursor-pointer text-xs font-bold px-3 py-1.5 rounded-xl bg-purple-900/50 hover:bg-purple-800/80 border border-purple-400/30 shadow-sm"
+              title="Restricted Administrator Access"
+            >
+              <Lock className="w-3 h-3 text-[#ff2a85]" />
+              <span>
+                {isAdminAuthenticated && activeView === 'admin'
+                  ? 'Admin Active'
+                  : 'Admin Portal'}
+              </span>
+            </button>
+          </div>
         </div>
       </footer>
+
+      {/* Password Modal for Admin Access */}
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSuccess={handleAdminLoginSuccess}
+      />
     </div>
   );
 }
