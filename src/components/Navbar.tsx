@@ -80,24 +80,19 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-16 gap-3">
           {/* Main Hub Branding */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#6c28f5] flex items-center justify-center text-white shadow-md shadow-purple-600/40">
+            <div className="w-10 h-10 rounded-2xl bg-[#6c28f5] flex items-center justify-center text-white shadow-md shadow-purple-600/40 shrink-0">
               <PhoneCall className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-black text-white text-lg sm:text-xl tracking-tight leading-tight">
-                  KIU Manifest Call Center Hub<span className="text-[#ff2a85]">.</span>
-                </h1>
-                {isSyncing && (
-                  <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#88d600] font-bold bg-[#88d600]/10 px-2 py-0.5 rounded-md border border-[#88d600]/20">
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    Syncing
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-purple-200/80 font-medium">
-                Campaign Operations, Contact Distribution & Live Feedback System
-              </p>
+            <div className="flex items-center gap-2">
+              <h1 className="font-black text-white text-lg sm:text-xl tracking-tight">
+                KIU Manifest Call Center Hub<span className="text-[#ff2a85]">.</span>
+              </h1>
+              {isSyncing && (
+                <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#88d600] font-bold bg-[#88d600]/10 px-2 py-0.5 rounded-md border border-[#88d600]/20">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  Syncing
+                </span>
+              )}
             </div>
           </div>
 
@@ -169,9 +164,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center justify-between gap-3">
           {/* Clear Portal Switcher Line */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-purple-300/80 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#ff2a85]" />
-              Portal Access:
+            <span className="text-xs font-bold text-purple-300/90">
+              Portal:
             </span>
 
             <div className="inline-flex p-1 bg-[#10042a] rounded-2xl border border-purple-400/25 shadow-inner">
