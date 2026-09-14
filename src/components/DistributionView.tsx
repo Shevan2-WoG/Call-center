@@ -22,6 +22,11 @@ import {
   AlertCircle,
   MessageSquare,
   ArrowRight,
+  Database,
+  UserCheck,
+  Clock,
+  Activity,
+  BarChart3,
 } from 'lucide-react';
 
 interface DistributionViewProps {
@@ -75,6 +80,31 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   const progressPercent =
     dateAssignments.length > 0
       ? Math.round((completedCount / dateAssignments.length) * 100)
+      : 0;
+
+  // Summary stats calculations for top dashboard section
+  const totalContactsCount = contacts.length;
+  const assignedContactsCount = contacts.filter((c) => c.status === 'assigned').length;
+  const unassignedContactsCount = unassignedContacts.length;
+  const contactAssignedPct =
+    totalContactsCount > 0
+      ? Math.round((assignedContactsCount / totalContactsCount) * 100)
+      : 0;
+  const contactUnassignedPct =
+    totalContactsCount > 0 ? 100 - contactAssignedPct : 0;
+
+  const totalRegisteredCallers = callers.length;
+  const activeCallersCount = callers.filter((c) => c.availabilityStatus === 'available').length;
+  const offDutyCallersCount = totalRegisteredCallers - activeCallersCount;
+  const callerActivePct =
+    totalRegisteredCallers > 0
+      ? Math.round((activeCallersCount / totalRegisteredCallers) * 100)
+      : 0;
+
+  const totalDateAssignments = dateAssignments.length;
+  const pendingPct =
+    totalDateAssignments > 0
+      ? Math.round((pendingCount / totalDateAssignments) * 100)
       : 0;
 
   // Calculate preview plan for the target contacts pool
@@ -183,66 +213,289 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
         </div>
       )}
 
-      {/* Top Banner & KPI metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-[#fbf7fe] p-5 rounded-2xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Unassigned Pool</span>
-            <span className="w-9 h-9 rounded-xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center font-bold">
-              <Users className="w-4 h-4" />
-            </span>
+      {/* ========================================================================= */}
+      {/* SUMMARY STATS CARD SECTION: Total Contacts, Active Callers, Pending Assignments */}
+      {/* ========================================================================= */}
+      <section id="admin-summary-stats-section" aria-label="Campaign Summary Statistics" className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-[#6c28f5]" />
+            <h2 className="text-xs font-black uppercase tracking-wider text-[#1e1b4b]">
+              Campaign &amp; Fleet Operations Summary
+            </h2>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#1e1b4b]">{unassignedContacts.length}</span>
-            <span className="text-xs text-[#7c7896] font-medium">contacts ready</span>
+          <div className="flex items-center gap-2 text-[11px] font-bold">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa]">
+              Active Date: {callingDate}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#88d600] animate-pulse" />
+              Live Telemetry
+            </span>
           </div>
         </div>
 
-        <div className="bg-[#fbf7fe] p-5 rounded-2xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Available Callers</span>
-            <span className="w-9 h-9 rounded-xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center">
-              <Share2 className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#1e1b4b]">{availableCallers.length}</span>
-            <span className="text-xs text-[#7c7896] font-medium">of {callers.length} active</span>
-          </div>
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* CARD 1: Total Contacts */}
+          <div
+            id="admin-stats-total-contacts"
+            className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center font-bold shadow-xs shrink-0">
+                    <Database className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-black uppercase tracking-wider text-[#7c7896]">
+                      Total Contacts
+                    </span>
+                    <span className="text-[11px] text-[#7c7896] font-medium">
+                      Excel Master Database
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#6c28f5]/10 text-[#6c28f5] border border-[#6c28f5]/20 whitespace-nowrap">
+                  100% In System
+                </span>
+              </div>
 
-        <div className="bg-[#fbf7fe] p-5 rounded-2xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Assigned Today</span>
-            <span className="w-9 h-9 rounded-xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center">
-              <PhoneForwarded className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#1e1b4b]">{dateAssignments.length}</span>
-            <span className="text-xs text-[#7c7896] font-medium">dispatched</span>
-          </div>
-        </div>
+              {/* Big Metric Display */}
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-black text-[#1e1b4b] tracking-tight">
+                  {totalContactsCount.toLocaleString()}
+                </span>
+                <span className="text-xs font-bold text-[#7c7896]">
+                  records
+                </span>
+              </div>
 
-        <div className="bg-[#fbf7fe] p-5 rounded-2xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">Calls Completed</span>
-            <span className="w-9 h-9 rounded-xl bg-[#f0fdf4] text-[#88d600] flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
-            </span>
+              {/* Highlighted Badges */}
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#6c28f5]/10 text-[#6c28f5] border border-[#6c28f5]/20 whitespace-nowrap">
+                  {assignedContactsCount} Dispatched ({contactAssignedPct}%)
+                </span>
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 whitespace-nowrap">
+                  {unassignedContactsCount} Pool Ready
+                </span>
+              </div>
+            </div>
+
+            {/* Simple Data Visualization: Dual-Tone Distribution Bar */}
+            <div className="mt-5 pt-3 border-t border-[#e2d0fa]/80">
+              <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 text-[#7c7896]">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#6c28f5]" />
+                  Assigned: {contactAssignedPct}%
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#dfc7fc]" />
+                  In Pool: {contactUnassignedPct}%
+                </span>
+              </div>
+              <div className="w-full h-2.5 bg-[#ede1fa] rounded-full overflow-hidden flex">
+                <div
+                  className="bg-[#6c28f5] h-full transition-all duration-500"
+                  style={{ width: `${contactAssignedPct}%` }}
+                  title={`${assignedContactsCount} Assigned (${contactAssignedPct}%)`}
+                />
+                <div
+                  className="bg-[#dfc7fc] h-full transition-all duration-500"
+                  style={{ width: `${contactUnassignedPct}%` }}
+                  title={`${unassignedContactsCount} Ready in Pool (${contactUnassignedPct}%)`}
+                />
+              </div>
+              <p className="text-[10px] text-[#7c7896] mt-1.5 font-medium">
+                {totalContactsCount > 0
+                  ? `${assignedContactsCount} assigned to callers • ${unassignedContactsCount} awaiting round-robin dispatch`
+                  : 'Import Excel (.xlsx) file in Contacts view to seed the campaign pool'}
+              </p>
+            </div>
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-3xl font-black text-[#1e1b4b]">{completedCount}</span>
-            <span className="text-xs font-bold text-[#88d600]">({progressPercent}%)</span>
+
+          {/* CARD 2: Active Callers */}
+          <div
+            id="admin-stats-active-callers"
+            className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#f0fdf4] text-[#88d600] flex items-center justify-center font-bold shadow-xs shrink-0">
+                    <UserCheck className="w-5 h-5 text-[#558800]" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-black uppercase tracking-wider text-[#7c7896]">
+                      Active Callers
+                    </span>
+                    <span className="text-[11px] text-[#7c7896] font-medium">
+                      Duty Fleet Roster
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#88d600] animate-ping" />
+                  {callerActivePct}% Shift Active
+                </span>
+              </div>
+
+              {/* Big Metric Display */}
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-black text-[#1e1b4b] tracking-tight">
+                  {activeCallersCount}
+                </span>
+                <span className="text-xs font-bold text-[#7c7896]">
+                  of {totalRegisteredCallers} callers available
+                </span>
+              </div>
+
+              {/* Highlighted Badges */}
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 whitespace-nowrap">
+                  {activeCallersCount} Online for Distribution
+                </span>
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa] whitespace-nowrap">
+                  Fleet Kept Constant
+                </span>
+              </div>
+            </div>
+
+            {/* Simple Data Visualization: Fleet Segments & Capacity Bar */}
+            <div className="mt-5 pt-3 border-t border-[#e2d0fa]/80">
+              <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 text-[#7c7896]">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#88d600]" />
+                  Active: {activeCallersCount}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#cbd5e1]" />
+                  Off Duty: {offDutyCallersCount}
+                </span>
+              </div>
+
+              {/* Caller Fleet Dot Pills */}
+              <div className="flex items-center gap-1.5 mb-2 overflow-x-auto py-0.5">
+                {callers.slice(0, 8).map((caller) => {
+                  const isAvailable = caller.availabilityStatus === 'available';
+                  return (
+                    <div
+                      key={caller.id}
+                      title={`${caller.name} (${caller.availabilityStatus})`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 border transition-all ${
+                        isAvailable
+                          ? 'bg-[#88d600]/20 text-[#365700] border-[#88d600]/50 ring-1 ring-[#88d600]/30'
+                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                      }`}
+                    >
+                      {caller.name.charAt(0)}
+                    </div>
+                  );
+                })}
+                {callers.length > 8 && (
+                  <span className="text-[10px] font-bold text-[#7c7896] px-1">
+                    +{callers.length - 8} more
+                  </span>
+                )}
+                {callers.length === 0 && (
+                  <span className="text-[11px] text-[#7c7896] italic">
+                    No callers registered
+                  </span>
+                )}
+              </div>
+
+              <div className="w-full h-2 bg-[#ede1fa] rounded-full overflow-hidden">
+                <div
+                  className="bg-[#88d600] h-full transition-all duration-500 rounded-full"
+                  style={{ width: `${callerActivePct}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-[#7c7896] mt-1.5 font-medium">
+                Callers are strictly preserved across data erase actions
+              </p>
+            </div>
           </div>
-          <div className="w-full bg-[#efe4fc] rounded-full h-1.5 mt-3 overflow-hidden">
-            <div
-              className="bg-[#88d600] h-1.5 rounded-full transition-all duration-500"
-              style={{ width: `${progressPercent}%` }}
-            />
+
+          {/* CARD 3: Pending Assignments */}
+          <div
+            id="admin-stats-pending-assignments"
+            className="bg-[#fbf7fe] p-5 rounded-3xl border border-[#e2d0fa] shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+          >
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-[#fff1f2] text-[#ff2a85] flex items-center justify-center font-bold shadow-xs shrink-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="block text-xs font-black uppercase tracking-wider text-[#7c7896]">
+                      Pending Assignments
+                    </span>
+                    <span className="text-[11px] text-[#7c7896] font-medium">
+                      Active Shift Queue
+                    </span>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-[#ff2a85]/10 text-[#d01464] border border-[#ff2a85]/20 whitespace-nowrap">
+                  {pendingPct}% Remaining
+                </span>
+              </div>
+
+              {/* Big Metric Display */}
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-3xl sm:text-4xl font-black text-[#1e1b4b] tracking-tight">
+                  {pendingCount}
+                </span>
+                <span className="text-xs font-bold text-[#7c7896]">
+                  calls to complete today
+                </span>
+              </div>
+
+              {/* Highlighted Badges */}
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#fff1f2] text-[#ff2a85] border border-[#fecdd3] whitespace-nowrap">
+                  {pendingCount} Awaiting Feedback
+                </span>
+                <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1 whitespace-nowrap">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  {completedCount} Completed ({progressPercent}%)
+                </span>
+              </div>
+            </div>
+
+            {/* Simple Data Visualization: Dual Progress Completion Tracker */}
+            <div className="mt-5 pt-3 border-t border-[#e2d0fa]/80">
+              <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 text-[#7c7896]">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#88d600]" />
+                  Completed: {progressPercent}%
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-[#ff2a85]" />
+                  Pending: {pendingPct}%
+                </span>
+              </div>
+              <div className="w-full h-2.5 bg-[#ede1fa] rounded-full overflow-hidden flex">
+                <div
+                  className="bg-[#88d600] h-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                  title={`${completedCount} Completed (${progressPercent}%)`}
+                />
+                <div
+                  className="bg-[#ff2a85] h-full transition-all duration-500"
+                  style={{ width: `${pendingPct}%` }}
+                  title={`${pendingCount} Pending (${pendingPct}%)`}
+                />
+              </div>
+              <p className="text-[10px] text-[#7c7896] mt-1.5 font-medium">
+                {totalDateAssignments > 0
+                  ? `${completedCount} of ${totalDateAssignments} contacts called • ${pendingCount} remaining in caller queues`
+                  : 'Run distribution engine below to assign contacts to callers'}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Distribution Action Section */}
       <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
