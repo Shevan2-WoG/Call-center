@@ -26,6 +26,7 @@ import {
   saveReassignmentsBatch,
   logAudit,
   seedInitialDataIfEmpty,
+  eraseExcelDataOnly,
   clearAllDatabaseData,
   clearUploadedContacts,
   clearDailyAssignments,
@@ -268,58 +269,71 @@ export default function App() {
     }
   };
 
-  // Clear uploaded Excel contacts & operational campaign data (Registered callers are kept constant!)
+  // Erase uploaded Excel data (Strictly Excel only; callers end is kept constant!)
   const handleEmptyAllData = async () => {
     if (
       window.confirm(
-        'Clear all uploaded Excel contacts, assignments, and calling records?\n\nNote: All registered callers and their details will remain constant and will NOT be deleted.'
+        'Are you sure you want to erase the uploaded Excel contacts?\n\n✔ Erasing will ONLY apply to the Excel contacts.\n✔ The callers end (all registered callers, phone numbers, WhatsApp details, and caller records) will NOT be erased and is strictly kept constant.'
       )
     ) {
       setIsSyncing(true);
       try {
-        await clearAllDatabaseData();
+        const { callersPreserved } = await eraseExcelDataOnly();
         setContacts([]);
-        // Strictly preserve callers
+        setAssignments([]);
+        // Strictly ensure callers remain constant and active
         const retainedCallers = await getCallers();
         setCallers(retainedCallers);
-        setAssignments([]);
-        setAttempts([]);
-        setReassignments([]);
-        setAuditLogs([]);
         if (retainedCallers.length > 0) {
           setSelectedCallerId((prev) =>
             retainedCallers.some((c) => c.id === prev) ? prev : retainedCallers[0].id
           );
         }
+        await logAudit({
+          userId: 'admin',
+          userName: 'Administrator',
+          userRole: 'admin',
+          action: 'EXCEL_DATA_ERASED',
+          entity: 'contacts',
+          metadata: {
+            callersPreserved,
+            message: 'Erase executed strictly for Excel data. Callers end kept constant.',
+          },
+        });
+        await loadData();
       } catch (err) {
-        console.error('Error emptying database:', err);
+        console.error('Error erasing Excel data:', err);
       } finally {
         setIsSyncing(false);
       }
     }
   };
 
-  // Clear ONLY uploaded Excel contacts (Callers remain 100% constant and protected)
+  // Erase ONLY uploaded Excel contacts (Callers end is strictly kept constant)
   const handleClearExcelContacts = async () => {
     if (
       window.confirm(
-        'Delete all uploaded Excel contacts and active assignments?\n\nNote: All registered callers and their details will remain completely safe and untouched.'
+        'Erase all uploaded Excel contacts?\n\n✔ ONLY the Excel contacts list will be erased.\n✔ The callers end is completely safe, untouched, and kept constant.'
       )
     ) {
       setIsSyncing(true);
       try {
-        await clearUploadedContacts();
+        const { callersPreserved } = await eraseExcelDataOnly();
+        setContacts([]);
+        setAssignments([]);
+        const retainedCallers = await getCallers();
+        setCallers(retainedCallers);
         await logAudit({
           userId: 'admin',
           userName: 'Administrator',
           userRole: 'admin',
           action: 'EXCEL_CONTACTS_PURGED',
           entity: 'contacts',
-          metadata: { callersPreserved: callers.length },
+          metadata: { callersPreserved, message: 'Callers end kept constant' },
         });
         await loadData();
       } catch (err) {
-        console.error('Error clearing Excel contacts:', err);
+        console.error('Error erasing Excel contacts:', err);
       } finally {
         setIsSyncing(false);
       }

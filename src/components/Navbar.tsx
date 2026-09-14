@@ -167,21 +167,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* If currently in ADMIN VIEW (unlocked via bottom password): show lock/exit and maintenance actions */}
             {activeView === 'admin' && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
+                {/* Caller Constancy Status Badge */}
+                <div
+                  title="The callers end is protected and kept constant during data erase operations"
+                  className="hidden lg:flex items-center gap-1 px-2 py-1 rounded-xl bg-[#88d600]/15 border border-[#88d600]/30 text-[#88d600] text-[11px] font-bold"
+                >
+                  <UserCheck className="w-3.5 h-3.5 text-[#88d600]" />
+                  <span>Callers: {callers.length} (Constant)</span>
+                </div>
+
                 <button
                   type="button"
                   onClick={onEmptyData}
-                  title="Clear uploaded Excel contacts and campaign data (Registered callers are kept constant)"
-                  className="text-xs px-2.5 py-1.5 rounded-xl border border-red-400/30 bg-red-500/20 hover:bg-red-500/30 text-red-100 flex items-center gap-1 transition-colors cursor-pointer font-bold"
+                  title="Erase only the imported Excel contacts. The callers end is strictly kept constant."
+                  className="text-xs px-2.5 py-1.5 rounded-xl border border-red-400/30 bg-red-500/20 hover:bg-red-500/30 text-red-100 flex items-center gap-1.5 transition-colors cursor-pointer font-bold"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden xl:inline">Clear Excel Data</span>
+                  <Trash2 className="w-3.5 h-3.5 text-red-300" />
+                  <span>Erase Excel Data</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={onResetData}
-                  title="Load sample demo"
+                  title="Load sample demo data"
                   className="text-xs px-2.5 py-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 text-purple-100 flex items-center gap-1 transition-colors cursor-pointer font-bold"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />

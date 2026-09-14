@@ -495,11 +495,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               <button
                 type="button"
                 onClick={onClearAllContacts}
-                title="Delete all uploaded Excel contacts (Callers and their details will remain constant and safe)"
+                title="Erase all uploaded Excel contacts (The callers end is strictly kept constant)"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-300/60 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                <span>Clear Excel Contacts</span>
+                <span>Erase Excel Contacts</span>
               </button>
             )}
           </div>
@@ -510,7 +510,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
           <div className="flex items-center gap-1.5">
             <CheckCircle className="w-3.5 h-3.5 text-[#88d600] shrink-0" />
             <span>
-              <strong>Caller Safety Guarantee:</strong> Deleting or clearing imported contacts only purges the Excel data. All registered callers &amp; details are kept constant.
+              <strong>Caller Constancy Guarantee:</strong> Erasing data applies strictly to the Excel contacts. The callers end is 100% kept constant.
             </span>
           </div>
           <span className="hidden sm:inline text-[#6c28f5] font-semibold">

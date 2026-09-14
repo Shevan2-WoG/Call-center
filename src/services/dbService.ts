@@ -707,48 +707,28 @@ export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', 
   });
 }
 
-// ------------------- CLEAR DATA (CALLERS ARE PERMANENTLY PRESERVED) -------------------
+// ------------------- CLEAR / ERASE DATA (STRICTLY EXCEL ONLY, CALLERS KEPT CONSTANT) -------------------
 
 /**
- * Clears uploaded Excel contacts, assignments, call attempts, and campaign logs.
- * CRITICAL DIRECTIVE: Callers and their details are strictly kept constant
- * and will NEVER be deleted when this or any delete prompt is triggered.
+ * Erases ONLY the imported Excel contacts and associated contact assignments.
+ * CRITICAL USER DIRECTIVE:
+ * Erasing of data is ONLY for the Excel data, NOT the callers end.
+ * The callers end (all caller profiles, phone numbers, WhatsApp details, targets, and settings)
+ * MUST and WILL be strictly kept constant.
  */
-export async function clearAllDatabaseData(): Promise<void> {
-  // Preserve callers in local memory
-  const callersBackup = getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []);
+export async function eraseExcelDataOnly(): Promise<{ callersPreserved: number }> {
+  // 1. Retrieve and guarantee existing callers remain intact
+  const callers = await getCallers();
+  setLocal(STORAGE_KEYS.CALLERS, callers);
 
-  // Remove Excel contacts, assignments, attempts, and temporary operational logs
-  const keysToPurge = [
-    STORAGE_KEYS.CONTACTS,
-    STORAGE_KEYS.ASSIGNMENTS,
-    STORAGE_KEYS.CALL_ATTEMPTS,
-    STORAGE_KEYS.REASSIGNMENTS,
-    STORAGE_KEYS.TEAMS,
-    STORAGE_KEYS.TEAM_MEMBERS,
-    STORAGE_KEYS.AUDIT_LOGS,
-  ];
+  // 2. Erase ONLY Excel contacts and their assignment linkages
+  setLocal(STORAGE_KEYS.CONTACTS, []);
+  setLocal(STORAGE_KEYS.ASSIGNMENTS, []);
+  setLocal(STORAGE_KEYS.TEAMS, []);
 
-  keysToPurge.forEach((key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch (e) {
-      // ignore
-    }
-  });
-
-  // Ensure callers remain securely saved
-  setLocal(STORAGE_KEYS.CALLERS, callersBackup);
-
-  // Purge Firestore collections - EXCLUDING 'callers'! Callers are kept constant!
-  const collectionsToPurge = [
-    'contacts',
-    'dailyTeams',
-    'assignments',
-    'callAttempts',
-    'reassignments',
-    'auditLogs',
-  ];
+  // 3. Purge ONLY contacts, assignments, and dailyTeams in Firestore
+  // Note: 'callers' collection is NEVER touched! Callers end is kept 100% constant!
+  const collectionsToPurge = ['contacts', 'assignments', 'dailyTeams'];
 
   for (const colName of collectionsToPurge) {
     try {
@@ -763,38 +743,34 @@ export async function clearAllDatabaseData(): Promise<void> {
         }
       }
     } catch (err) {
-      console.warn(`Firestore clear error on ${colName}:`, err);
+      console.warn(`Firestore erase error on ${colName}:`, err);
     }
   }
+
+  // 4. Double check callers in Firestore to guarantee they exist and remain constant
+  for (const caller of callers) {
+    try {
+      await setDoc(doc(db, 'callers', caller.id), caller, { merge: true });
+    } catch (err) {
+      console.warn('Firestore caller verify error:', err);
+    }
+  }
+
+  return { callersPreserved: callers.length };
 }
 
 /**
- * Specifically clears only imported Excel contacts and current assignments,
- * guaranteeing callers and their profiles remain 100% constant and intact.
+ * Alias for backward compatibility - strictly routes to eraseExcelDataOnly.
+ * Ensures that any call to clear data NEVER touches the callers end.
+ */
+export async function clearAllDatabaseData(): Promise<void> {
+  await eraseExcelDataOnly();
+}
+
+/**
+ * Specifically clears only imported Excel contacts, keeping callers end constant.
  */
 export async function clearUploadedContacts(): Promise<void> {
-  // 1. Clear contacts and assignments locally
-  setLocal(STORAGE_KEYS.CONTACTS, []);
-  setLocal(STORAGE_KEYS.ASSIGNMENTS, []);
-  setLocal(STORAGE_KEYS.TEAMS, []);
-
-  // 2. Clear in Firestore in safe batches
-  const collections = ['contacts', 'assignments', 'dailyTeams'];
-  for (const colName of collections) {
-    try {
-      const snap = await getDocs(collection(db, colName));
-      if (!snap.empty) {
-        for (let i = 0; i < snap.docs.length; i += 400) {
-          const batch = writeBatch(db);
-          snap.docs.slice(i, i + 400).forEach((docSnap) => {
-            batch.delete(docSnap.ref);
-          });
-          await batch.commit();
-        }
-      }
-    } catch (err) {
-      console.warn(`Firestore clear contacts error on ${colName}:`, err);
-    }
-  }
+  await eraseExcelDataOnly();
 }
 
