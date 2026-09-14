@@ -30,6 +30,7 @@ interface DistributionViewProps {
   assignments: Assignment[];
   callingDate: string;
   onDistribute: (newAssignments: Omit<Assignment, 'id'>[], team: DailyTeam) => Promise<void>;
+  onRedistributeAll?: (newAssignments: Omit<Assignment, 'id'>[], team: DailyTeam) => Promise<void>;
   onSwitchToCaller: (callerId: string) => void;
 }
 
@@ -39,36 +40,46 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   assignments,
   callingDate,
   onDistribute,
+  onRedistributeAll,
   onSwitchToCaller,
 }) => {
-  const [selectedCallerIds, setSelectedCallerIds] = useState<string[]>(
-    callers.filter((c) => c.availabilityStatus === 'available').map((c) => c.id)
+  // Default to selecting ALL callers in the system to ensure equal distribution across all parties
+  const [selectedCallerIds, setSelectedCallerIds] = useState<string[]>(() =>
+    callers.map((c) => c.id)
   );
 
   React.useEffect(() => {
-    setSelectedCallerIds(
-      callers.filter((c) => c.availabilityStatus === 'available').map((c) => c.id)
-    );
+    setSelectedCallerIds((prev) => {
+      // If none selected or callers list changed, include all registered callers
+      const validPrev = prev.filter((id) => callers.some((c) => c.id === id));
+      return validPrev.length > 0 ? validPrev : callers.map((c) => c.id);
+    });
   }, [callers]);
+
   const [isDistributing, setIsDistributing] = useState(false);
   const [copiedCallerId, setCopiedCallerId] = useState<string | null>(null);
   const [activePreviewCallerId, setActivePreviewCallerId] = useState<string | null>(null);
+  const [distributionScope, setDistributionScope] = useState<'unassigned' | 'all'>('unassigned');
 
   // Unassigned contacts pool
   const unassignedContacts = contacts.filter((c) => c.status === 'unassigned');
   const availableCallers = callers.filter((c) => selectedCallerIds.includes(c.id));
 
+  // Determine contacts pool based on scope
+  const targetContactsPool = distributionScope === 'all' ? contacts : unassignedContacts;
+
   // Current date assignments
   const dateAssignments = assignments.filter((a) => a.callingDate === callingDate);
   const completedCount = dateAssignments.filter((a) => a.status === 'Completed').length;
   const pendingCount = dateAssignments.length - completedCount;
-  const progressPercent = dateAssignments.length > 0
-    ? Math.round((completedCount / dateAssignments.length) * 100)
-    : 0;
+  const progressPercent =
+    dateAssignments.length > 0
+      ? Math.round((completedCount / dateAssignments.length) * 100)
+      : 0;
 
-  // Calculate preview plan
+  // Calculate preview plan for the target contacts pool
   const previewPlan: DistributionResult = calculateDistribution(
-    unassignedContacts,
+    targetContactsPool,
     availableCallers,
     callingDate,
     `team_${callingDate}`
@@ -80,8 +91,24 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
     );
   };
 
+  const handleSelectAllCallers = () => {
+    setSelectedCallerIds(callers.map((c) => c.id));
+  };
+
+  const handleSelectAvailableOnly = () => {
+    setSelectedCallerIds(
+      callers
+        .filter((c) => c.availabilityStatus === 'available')
+        .map((c) => c.id)
+    );
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedCallerIds([]);
+  };
+
   const handleExecuteDistribution = async () => {
-    if (previewPlan.assignments.length === 0) return;
+    if (previewPlan.assignments.length === 0 || availableCallers.length === 0) return;
     setIsDistributing(true);
     try {
       const team: DailyTeam = {
@@ -89,11 +116,16 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
         callingDate,
         createdBy: 'Admin',
         status: 'active',
-        totalContacts: dateAssignments.length + previewPlan.assignments.length,
-        totalAssigned: dateAssignments.length + previewPlan.assignments.length,
+        totalContacts: previewPlan.assignments.length,
+        totalAssigned: previewPlan.assignments.length,
         createdAt: new Date().toISOString(),
       };
-      await onDistribute(previewPlan.assignments, team);
+
+      if (distributionScope === 'all' && onRedistributeAll) {
+        await onRedistributeAll(previewPlan.assignments, team);
+      } else {
+        await onDistribute(previewPlan.assignments, team);
+      }
     } finally {
       setIsDistributing(false);
     }
@@ -216,32 +248,113 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
       <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
         <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#6c28f5]" />
-              Automated Contact Distribution Engine
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-black text-[#1e1b4b] flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#6c28f5]" />
+                Automated Equal Contact Distribution Engine
+              </h2>
+              <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30">
+                100% Equal Roster Guarantee
+              </span>
+            </div>
             <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-              Calculates equal divisions according to Section 8: e.g. 103 contacts among 4 callers = 26, 26, 26, 25.
+              Equally distributes contacts among all registered parties regardless of fleet size or roster count.
             </p>
           </div>
 
-          <button
-            type="button"
-            disabled={unassignedContacts.length === 0 || availableCallers.length === 0 || isDistributing}
-            onClick={handleExecuteDistribution}
-            className="px-5 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] disabled:bg-[#dfcaf8] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-700/20 cursor-pointer disabled:cursor-not-allowed"
-          >
-            <Share2 className="w-4 h-4" />
-            {isDistributing ? 'Distributing...' : `Distribute ${unassignedContacts.length} Contacts Equally`}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={targetContactsPool.length === 0 || availableCallers.length === 0 || isDistributing}
+              onClick={handleExecuteDistribution}
+              className="px-5 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] disabled:bg-[#dfcaf8] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-700/20 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <Share2 className="w-4 h-4" />
+              {isDistributing
+                ? 'Distributing...'
+                : `Distribute ${targetContactsPool.length} Contacts Equally`}
+            </button>
+          </div>
         </div>
 
         <div className="p-5 space-y-5">
+          {/* Scope Selection (Unassigned vs All contacts) */}
+          {contacts.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-[#f8f2fe] p-3 rounded-2xl border border-[#e2d0fa]">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#1e1b4b]">
+                <span>Distribution Scope:</span>
+                <div className="inline-flex rounded-xl bg-white/70 p-1 border border-[#e2d0fa]">
+                  <button
+                    type="button"
+                    onClick={() => setDistributionScope('unassigned')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      distributionScope === 'unassigned'
+                        ? 'bg-[#6c28f5] text-white shadow-xs'
+                        : 'text-[#7c7896] hover:text-[#1e1b4b]'
+                    }`}
+                  >
+                    Unassigned Contacts ({unassignedContacts.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDistributionScope('all')}
+                    className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      distributionScope === 'all'
+                        ? 'bg-[#6c28f5] text-white shadow-xs'
+                        : 'text-[#7c7896] hover:text-[#1e1b4b]'
+                    }`}
+                  >
+                    All Contacts Full Re-balance ({contacts.length})
+                  </button>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-[#7c7896]">
+                Target Pool:{' '}
+                <strong className="text-[#6c28f5] font-extrabold">
+                  {targetContactsPool.length} contacts
+                </strong>{' '}
+                to divide equally across{' '}
+                <strong className="text-[#6c28f5] font-extrabold">
+                  {availableCallers.length} callers
+                </strong>
+              </div>
+            </div>
+          )}
+
           {/* Active Callers Selection */}
           <div>
-            <label className="block text-xs font-bold text-[#1e1b4b] uppercase tracking-wider mb-2">
-              Select Callers Included in This Distribution:
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+              <label className="text-xs font-bold text-[#1e1b4b] uppercase tracking-wider">
+                Select Callers Included in This Distribution ({selectedCallerIds.length} of {callers.length} selected):
+              </label>
+
+              {/* Quick selection helper buttons */}
+              <div className="flex items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={handleSelectAllCallers}
+                  className="px-2.5 py-1 rounded-lg bg-[#f3efff] text-[#6c28f5] hover:bg-[#6c28f5] hover:text-white font-bold transition-colors cursor-pointer border border-[#e8e1f9]"
+                >
+                  Select All ({callers.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSelectAvailableOnly}
+                  className="px-2.5 py-1 rounded-lg bg-[#f0fdf4] text-[#15803d] hover:bg-[#15803d] hover:text-white font-bold transition-colors cursor-pointer border border-[#dcfce7]"
+                >
+                  Available Only ({callers.filter((c) => c.availabilityStatus === 'available').length})
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeselectAll}
+                  className="px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 font-medium transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {callers.map((c) => {
                 const isSelected = selectedCallerIds.includes(c.id);
@@ -285,49 +398,73 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             </div>
           </div>
 
-          {/* Distribution Simulation & Preview Math */}
-          {unassignedContacts.length > 0 && availableCallers.length > 0 ? (
-            <div className="bg-[#f3e8fd] rounded-2xl p-4 border border-[#e2d0fa]">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-[#1e1b4b] uppercase tracking-wider">
-                  Fair Distribution Calculation Preview:
-                </span>
-                <span className="text-xs font-semibold text-[#6c28f5]">
-                  {unassignedContacts.length} contacts ÷ {availableCallers.length} callers
-                </span>
+          {/* Distribution Simulation & Mathematical Equality Breakdown */}
+          {targetContactsPool.length > 0 && availableCallers.length > 0 ? (
+            <div className="bg-[#f3e8fd] rounded-2xl p-4 border border-[#e2d0fa] space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e2d0fa] pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-[#1e1b4b] uppercase tracking-wider">
+                      Equal Distribution Mathematical Verification
+                    </span>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000]">
+                      Active
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#6c28f5] font-semibold mt-0.5">
+                    {targetContactsPool.length} contacts ÷ {availableCallers.length} callers ={' '}
+                    <strong>{Math.floor(targetContactsPool.length / availableCallers.length)}</strong> contacts per caller
+                    {targetContactsPool.length % availableCallers.length > 0 && (
+                      <span className="text-[#7c7896] font-normal">
+                        {' '}(+1 each for the first {targetContactsPool.length % availableCallers.length} callers to allocate 100% of contacts)
+                      </span>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs text-[#1e1b4b] font-bold bg-[#fbf7fe] px-3 py-1.5 rounded-xl border border-[#e2d0fa]">
+                  <CheckCircle2 className="w-4 h-4 text-[#88d600]" />
+                  <span>100% Distributed ({previewPlan.assignments.length} Contacts, 0 Leftover)</span>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {previewPlan.plan.map((item, idx) => (
-                  <div key={item.caller.id} className="bg-[#fbf7fe] p-3.5 rounded-xl border border-[#e2d0fa] shadow-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[#7c7896]">Caller #{idx + 1}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] font-extrabold">
-                        +{item.count} contacts
+                {previewPlan.plan.map((item, idx) => {
+                  const sharePct =
+                    targetContactsPool.length > 0
+                      ? Math.round((item.count / targetContactsPool.length) * 100)
+                      : 0;
+                  return (
+                    <div key={item.caller.id} className="bg-[#fbf7fe] p-3.5 rounded-xl border border-[#e2d0fa] shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[#7c7896]">Party #{idx + 1}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] font-extrabold">
+                          {item.count} contacts ({sharePct}%)
+                        </span>
+                      </div>
+                      <span className="font-bold text-sm text-[#1e1b4b] block mt-1.5 truncate">
+                        {item.caller.name}
+                      </span>
+                      <span className="text-xs text-[#7c7896] mt-1 block">
+                        WhatsApp: {item.caller.whatsappNumber}
                       </span>
                     </div>
-                    <span className="font-bold text-sm text-[#1e1b4b] block mt-1.5">
-                      {item.caller.name}
-                    </span>
-                    <span className="text-xs text-[#7c7896] mt-1 block">
-                      WhatsApp: {item.caller.whatsappNumber}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
-          ) : unassignedContacts.length === 0 ? (
+          ) : targetContactsPool.length === 0 ? (
             <div className="p-4 bg-[#f3e8fd] rounded-2xl border border-[#e2d0fa] flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-[#88d600] shrink-0" />
               <div className="text-xs text-[#1e1b4b]">
-                <span className="font-bold">All contacts are distributed!</span> Upload more contacts in the &quot;Contacts &amp; Import&quot; tab to dispatch additional rosters.
+                <span className="font-bold">No contacts pending distribution!</span> Upload more contacts in the &quot;Contacts &amp; Import&quot; tab or select &quot;All Contacts Full Re-balance&quot; above to re-distribute existing rosters equally.
               </div>
             </div>
           ) : (
             <div className="p-4 bg-[#fffbeb] rounded-2xl border border-[#fef3c7] flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-[#ffb800] shrink-0" />
               <span className="text-xs text-[#92400e] font-semibold">
-                Please select at least one caller above to distribute the {unassignedContacts.length} unassigned contacts.
+                Please select at least one caller above to distribute the {targetContactsPool.length} contacts.
               </span>
             </div>
           )}

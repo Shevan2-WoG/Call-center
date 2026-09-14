@@ -249,16 +249,48 @@ export async function saveAssignmentsBatch(newAssignments: Omit<Assignment, 'id'
   setLocal(STORAGE_KEYS.CONTACTS, contacts);
 
   try {
-    const batch = writeBatch(db);
-    created.slice(0, 100).forEach(asg => {
-      batch.set(doc(db, 'assignments', asg.id), asg);
-    });
-    await batch.commit();
+    // Write in chunks of 400 to comply with Firestore batch limits (never truncate!)
+    for (let i = 0; i < created.length; i += 400) {
+      const batch = writeBatch(db);
+      created.slice(i, i + 400).forEach(asg => {
+        batch.set(doc(db, 'assignments', asg.id), asg);
+      });
+      await batch.commit();
+    }
+
+    // Update contacts status in Firestore as well
+    for (let i = 0; i < created.length; i += 400) {
+      const batch = writeBatch(db);
+      created.slice(i, i + 400).forEach(asg => {
+        batch.update(doc(db, 'contacts', asg.contactId), { status: 'assigned' });
+      });
+      await batch.commit();
+    }
   } catch (err) {
     console.warn('Firestore batch save assignments error', err);
   }
 
   return created;
+}
+
+export async function clearDailyAssignments(callingDate: string): Promise<void> {
+  const existing = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
+  const remaining = existing.filter((a) => a.callingDate !== callingDate);
+  setLocal(STORAGE_KEYS.ASSIGNMENTS, remaining);
+
+  try {
+    const snap = await getDocs(collection(db, 'assignments'));
+    const toDelete = snap.docs.filter((d) => d.data().callingDate === callingDate);
+    for (let i = 0; i < toDelete.length; i += 400) {
+      const batch = writeBatch(db);
+      toDelete.slice(i, i + 400).forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn('Firestore clearDailyAssignments error', err);
+  }
 }
 
 export async function updateAssignmentsBatch(updatedList: Assignment[]): Promise<void> {
@@ -493,52 +525,56 @@ export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', 
     return; // Already initialized
   }
 
-  // 1. Seed Callers (4 callers as in specification: Caller A, B, C, D)
-  const initialCallers: Caller[] = [
-    {
-      id: 'caller_1',
-      name: 'Caller A (Sarah Namukasa)',
-      phone: '+256701111222',
-      whatsappNumber: '+256701111222',
-      availabilityStatus: 'available',
-      teamGroup: 'Kampala Central',
-      targetCalls: 30,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'caller_2',
-      name: 'Caller B (David Kato)',
-      phone: '+256702222333',
-      whatsappNumber: '+256702222333',
-      availabilityStatus: 'available',
-      teamGroup: 'Kampala Central',
-      targetCalls: 30,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'caller_3',
-      name: 'Caller C (Brenda Akello)',
-      phone: '+256703333444',
-      whatsappNumber: '+256703333444',
-      availabilityStatus: 'available',
-      teamGroup: 'Wakiso West',
-      targetCalls: 30,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'caller_4',
-      name: 'Caller D (Joseph Ochieng)',
-      phone: '+256704444555',
-      whatsappNumber: '+256704444555',
-      availabilityStatus: 'available',
-      teamGroup: 'Wakiso West',
-      targetCalls: 30,
-      createdAt: new Date().toISOString(),
-    },
-  ];
+  // 1. Seed Callers ONLY if no callers exist in the system yet. Callers are kept constant!
+  let callersToUse = existingCallers;
+  if (existingCallers.length === 0) {
+    const initialCallers: Caller[] = [
+      {
+        id: 'caller_1',
+        name: 'Caller A (Sarah Namukasa)',
+        phone: '+256701111222',
+        whatsappNumber: '+256701111222',
+        availabilityStatus: 'available',
+        teamGroup: 'Kampala Central',
+        targetCalls: 30,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'caller_2',
+        name: 'Caller B (David Kato)',
+        phone: '+256702222333',
+        whatsappNumber: '+256702222333',
+        availabilityStatus: 'available',
+        teamGroup: 'Kampala Central',
+        targetCalls: 30,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'caller_3',
+        name: 'Caller C (Brenda Akello)',
+        phone: '+256703333444',
+        whatsappNumber: '+256703333444',
+        availabilityStatus: 'available',
+        teamGroup: 'Wakiso West',
+        targetCalls: 30,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'caller_4',
+        name: 'Caller D (Joseph Ochieng)',
+        phone: '+256704444555',
+        whatsappNumber: '+256704444555',
+        availabilityStatus: 'available',
+        teamGroup: 'Wakiso West',
+        targetCalls: 30,
+        createdAt: new Date().toISOString(),
+      },
+    ];
 
-  for (const c of initialCallers) {
-    await saveCaller(c);
+    for (const c of initialCallers) {
+      await saveCaller(c);
+    }
+    callersToUse = initialCallers;
   }
 
   // 2. Seed Initial Sample Contacts
@@ -585,7 +621,7 @@ export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', 
   const now = new Date().toISOString();
 
   seededContacts.forEach((contact, index) => {
-    const caller = initialCallers[index % initialCallers.length];
+    const caller = callersToUse[index % callersToUse.length];
     initialAssignments.push({
       contactId: contact.id,
       contactName: contact.name,
@@ -664,24 +700,36 @@ export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', 
     action: 'SYSTEM_INITIALIZED',
     entity: 'system',
     metadata: {
-      callersCount: initialCallers.length,
+      callersCount: callersToUse.length,
       contactsCount: seededContacts.length,
       date: currentCallingDate,
     },
   });
 }
 
-// ------------------- CLEAR / EMPTY ALL DATA -------------------
-export async function clearAllDatabaseData(): Promise<void> {
-  // Clear local storage entirely
-  try {
-    localStorage.clear();
-  } catch (e) {
-    // ignore
-  }
+// ------------------- CLEAR DATA (CALLERS ARE PERMANENTLY PRESERVED) -------------------
 
-  // Explicitly remove all individual keys
-  Object.values(STORAGE_KEYS).forEach((key) => {
+/**
+ * Clears uploaded Excel contacts, assignments, call attempts, and campaign logs.
+ * CRITICAL DIRECTIVE: Callers and their details are strictly kept constant
+ * and will NEVER be deleted when this or any delete prompt is triggered.
+ */
+export async function clearAllDatabaseData(): Promise<void> {
+  // Preserve callers in local memory
+  const callersBackup = getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []);
+
+  // Remove Excel contacts, assignments, attempts, and temporary operational logs
+  const keysToPurge = [
+    STORAGE_KEYS.CONTACTS,
+    STORAGE_KEYS.ASSIGNMENTS,
+    STORAGE_KEYS.CALL_ATTEMPTS,
+    STORAGE_KEYS.REASSIGNMENTS,
+    STORAGE_KEYS.TEAMS,
+    STORAGE_KEYS.TEAM_MEMBERS,
+    STORAGE_KEYS.AUDIT_LOGS,
+  ];
+
+  keysToPurge.forEach((key) => {
     try {
       localStorage.removeItem(key);
     } catch (e) {
@@ -689,19 +737,20 @@ export async function clearAllDatabaseData(): Promise<void> {
     }
   });
 
-  // Purge Firestore collections in chunked batches of 400
-  const collections = [
+  // Ensure callers remain securely saved
+  setLocal(STORAGE_KEYS.CALLERS, callersBackup);
+
+  // Purge Firestore collections - EXCLUDING 'callers'! Callers are kept constant!
+  const collectionsToPurge = [
     'contacts',
-    'callers',
     'dailyTeams',
     'assignments',
     'callAttempts',
     'reassignments',
     'auditLogs',
-    'users',
   ];
 
-  for (const colName of collections) {
+  for (const colName of collectionsToPurge) {
     try {
       const snap = await getDocs(collection(db, colName));
       if (!snap.empty) {
@@ -715,6 +764,36 @@ export async function clearAllDatabaseData(): Promise<void> {
       }
     } catch (err) {
       console.warn(`Firestore clear error on ${colName}:`, err);
+    }
+  }
+}
+
+/**
+ * Specifically clears only imported Excel contacts and current assignments,
+ * guaranteeing callers and their profiles remain 100% constant and intact.
+ */
+export async function clearUploadedContacts(): Promise<void> {
+  // 1. Clear contacts and assignments locally
+  setLocal(STORAGE_KEYS.CONTACTS, []);
+  setLocal(STORAGE_KEYS.ASSIGNMENTS, []);
+  setLocal(STORAGE_KEYS.TEAMS, []);
+
+  // 2. Clear in Firestore in safe batches
+  const collections = ['contacts', 'assignments', 'dailyTeams'];
+  for (const colName of collections) {
+    try {
+      const snap = await getDocs(collection(db, colName));
+      if (!snap.empty) {
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const batch = writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach((docSnap) => {
+            batch.delete(docSnap.ref);
+          });
+          await batch.commit();
+        }
+      }
+    } catch (err) {
+      console.warn(`Firestore clear contacts error on ${colName}:`, err);
     }
   }
 }

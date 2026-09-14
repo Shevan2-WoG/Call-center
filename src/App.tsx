@@ -27,6 +27,8 @@ import {
   logAudit,
   seedInitialDataIfEmpty,
   clearAllDatabaseData,
+  clearUploadedContacts,
+  clearDailyAssignments,
 } from './services/dbService';
 import { Navbar } from './components/Navbar';
 import { DistributionView } from './components/DistributionView';
@@ -266,28 +268,90 @@ export default function App() {
     }
   };
 
-  // Empty all database data to start completely fresh
+  // Clear uploaded Excel contacts & operational campaign data (Registered callers are kept constant!)
   const handleEmptyAllData = async () => {
     if (
       window.confirm(
-        'Empty the entire database? All contacts, callers, assignments, and calling records will be cleared so you can fill new data from scratch.'
+        'Clear all uploaded Excel contacts, assignments, and calling records?\n\nNote: All registered callers and their details will remain constant and will NOT be deleted.'
       )
     ) {
       setIsSyncing(true);
       try {
         await clearAllDatabaseData();
         setContacts([]);
-        setCallers([]);
+        // Strictly preserve callers
+        const retainedCallers = await getCallers();
+        setCallers(retainedCallers);
         setAssignments([]);
         setAttempts([]);
         setReassignments([]);
         setAuditLogs([]);
-        setSelectedCallerId('');
+        if (retainedCallers.length > 0) {
+          setSelectedCallerId((prev) =>
+            retainedCallers.some((c) => c.id === prev) ? prev : retainedCallers[0].id
+          );
+        }
       } catch (err) {
         console.error('Error emptying database:', err);
       } finally {
         setIsSyncing(false);
       }
+    }
+  };
+
+  // Clear ONLY uploaded Excel contacts (Callers remain 100% constant and protected)
+  const handleClearExcelContacts = async () => {
+    if (
+      window.confirm(
+        'Delete all uploaded Excel contacts and active assignments?\n\nNote: All registered callers and their details will remain completely safe and untouched.'
+      )
+    ) {
+      setIsSyncing(true);
+      try {
+        await clearUploadedContacts();
+        await logAudit({
+          userId: 'admin',
+          userName: 'Administrator',
+          userRole: 'admin',
+          action: 'EXCEL_CONTACTS_PURGED',
+          entity: 'contacts',
+          metadata: { callersPreserved: callers.length },
+        });
+        await loadData();
+      } catch (err) {
+        console.error('Error clearing Excel contacts:', err);
+      } finally {
+        setIsSyncing(false);
+      }
+    }
+  };
+
+  // Equal full redistribution of contacts across callers
+  const handleRedistributeAll = async (
+    newAssignments: Omit<Assignment, 'id'>[],
+    team: DailyTeam
+  ) => {
+    setIsSyncing(true);
+    try {
+      await clearDailyAssignments(callingDate);
+      const created = await saveAssignmentsBatch(newAssignments);
+      await logAudit({
+        userId: 'admin',
+        userName: 'Administrator',
+        userRole: 'admin',
+        action: 'ALL_CONTACTS_REDISTRIBUTED_EQUALLY',
+        entity: 'assignments',
+        metadata: {
+          count: created.length,
+          callingDate,
+          teamId: team.id,
+        },
+      });
+      await loadData();
+    } catch (err) {
+      console.error('Error redistributing all contacts:', err);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -441,6 +505,7 @@ export default function App() {
               assignments={assignments}
               callingDate={callingDate}
               onDistribute={handleDistribute}
+              onRedistributeAll={handleRedistributeAll}
               onSwitchToCaller={handleSwitchToCaller}
             />
           )}
@@ -450,6 +515,7 @@ export default function App() {
               contacts={contacts}
               onImportContacts={handleImportContacts}
               onDeleteContact={handleDeleteContact}
+              onClearAllContacts={handleClearExcelContacts}
               onRefresh={loadData}
             />
           )}

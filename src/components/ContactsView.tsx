@@ -29,6 +29,7 @@ interface ContactsViewProps {
   contacts: Contact[];
   onImportContacts: (contacts: Omit<Contact, 'id' | 'createdAt' | 'status'>[]) => Promise<void>;
   onDeleteContact?: (contactId: string) => Promise<void>;
+  onClearAllContacts?: () => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -36,6 +37,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   contacts,
   onImportContacts,
   onDeleteContact,
+  onClearAllContacts,
   onRefresh,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -488,7 +490,32 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             >
               <RefreshCw className="w-4 h-4" />
             </button>
+
+            {onClearAllContacts && contacts.length > 0 && (
+              <button
+                type="button"
+                onClick={onClearAllContacts}
+                title="Delete all uploaded Excel contacts (Callers and their details will remain constant and safe)"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-300/60 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                <span>Clear Excel Contacts</span>
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* Protection Banner */}
+        <div className="bg-[#fcf8ff] px-4 py-2 border-b border-[#e2d0fa]/80 flex items-center justify-between gap-2 text-[11px] text-[#7c7896]">
+          <div className="flex items-center gap-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-[#88d600] shrink-0" />
+            <span>
+              <strong>Caller Safety Guarantee:</strong> Deleting or clearing imported contacts only purges the Excel data. All registered callers &amp; details are kept constant.
+            </span>
+          </div>
+          <span className="hidden sm:inline text-[#6c28f5] font-semibold">
+            {contacts.filter((c) => c.status === 'unassigned').length} ready for distribution
+          </span>
         </div>
 
         {/* Contacts Table */}

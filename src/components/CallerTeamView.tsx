@@ -130,14 +130,18 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-black text-[#1e1b4b]">
-                  Daily Calling Team & Availability
+                  Daily Calling Team &amp; Availability
                 </h2>
                 <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9]">
                   {callingDate}
                 </span>
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 hidden sm:inline-flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#88d600]" />
+                  Protected from Global Deletes
+                </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                Register available callers, verify WhatsApp-enabled numbers, set daily call targets, and manage shifts.
+                Register callers &amp; WhatsApp numbers. Callers registered here are permanent and remain constant even when clearing Excel data.
               </p>
             </div>
           </div>

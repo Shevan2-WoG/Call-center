@@ -30,7 +30,7 @@ export function calculateDistribution(
 
   if (nCallers === 0 || nContacts === 0) {
     return {
-      plan: [],
+      plan: availableCallers.map((caller) => ({ caller, count: 0, contacts: [] })),
       assignments: [],
       totalContacts: nContacts,
       totalCallers: nCallers,
@@ -41,47 +41,47 @@ export function calculateDistribution(
   const basePerCaller = Math.floor(nContacts / nCallers);
   const remainder = nContacts % nCallers;
 
-  const plan: DistributionPlanItem[] = [];
+  // Initialize plan items for all parties
+  const plan: DistributionPlanItem[] = availableCallers.map((caller) => ({
+    caller,
+    count: 0,
+    contacts: [],
+  }));
+
   const assignments: Omit<Assignment, 'id'>[] = [];
+  const now = new Date().toISOString();
 
-  let contactCursor = 0;
+  // Equal round-robin distribution to all parties:
+  // Contact i is allocated to caller (i % nCallers)
+  // Guarantees:
+  // 1. Every contact is assigned (100% distribution with zero contacts left behind)
+  // 2. All parties get Math.floor(nContacts / nCallers) contacts
+  // 3. The remainder (nContacts % nCallers) contacts are distributed 1-by-1 to callers
+  // 4. Contacts from the Excel sheet are evenly dispersed among all parties
+  for (let i = 0; i < nContacts; i++) {
+    const callerIdx = i % nCallers;
+    const contact = contactsToDistribute[i];
+    const caller = availableCallers[callerIdx];
 
-  for (let i = 0; i < nCallers; i++) {
-    const caller = availableCallers[i];
-    // First 'remainder' callers get base + 1, rest get base
-    const countForCaller = basePerCaller + (i < remainder ? 1 : 0);
-    const assignedContacts = contactsToDistribute.slice(
-      contactCursor,
-      contactCursor + countForCaller
-    );
-    contactCursor += countForCaller;
+    plan[callerIdx].count += 1;
+    plan[callerIdx].contacts.push(contact);
 
-    plan.push({
-      caller,
-      count: countForCaller,
-      contacts: assignedContacts,
-    });
-
-    const now = new Date().toISOString();
-
-    assignedContacts.forEach(contact => {
-      assignments.push({
-        contactId: contact.id,
-        contactName: contact.name,
-        contactPhone: contact.phone,
-        contactLocation: contact.location,
-        contactCategory: contact.category,
-        contactNotes: contact.notes,
-        callerId: caller.id,
-        callerName: caller.name,
-        teamId,
-        callingDate,
-        status: 'Assigned',
-        originalCallerId: caller.id,
-        currentCallerId: caller.id,
-        assignedAt: now,
-        reassignmentHistory: [],
-      });
+    assignments.push({
+      contactId: contact.id,
+      contactName: contact.name,
+      contactPhone: contact.phone,
+      contactLocation: contact.location,
+      contactCategory: contact.category,
+      contactNotes: contact.notes,
+      callerId: caller.id,
+      callerName: caller.name,
+      teamId,
+      callingDate,
+      status: 'Assigned',
+      originalCallerId: caller.id,
+      currentCallerId: caller.id,
+      assignedAt: now,
+      reassignmentHistory: [],
     });
   }
 

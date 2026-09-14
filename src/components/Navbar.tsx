@@ -171,11 +171,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   type="button"
                   onClick={onEmptyData}
-                  title="Empty database"
+                  title="Clear uploaded Excel contacts and campaign data (Registered callers are kept constant)"
                   className="text-xs px-2.5 py-1.5 rounded-xl border border-red-400/30 bg-red-500/20 hover:bg-red-500/30 text-red-100 flex items-center gap-1 transition-colors cursor-pointer font-bold"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden xl:inline">Empty DB</span>
+                  <span className="hidden xl:inline">Clear Excel Data</span>
                 </button>
 
                 <button
