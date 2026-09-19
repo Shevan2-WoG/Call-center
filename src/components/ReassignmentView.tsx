@@ -86,7 +86,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
         </div>
         <h3 className="text-base font-black text-[#1e1b4b] mb-1">No Callers Registered Yet</h3>
         <p className="text-xs text-[#7c7896] font-medium">
-          Workload reassignment will be enabled once daily callers are registered and contacts have been distributed.
+          Workload reassignment will be enabled once callers are registered in the permanent roster and contacts have been distributed.
         </p>
       </div>
     );
@@ -244,7 +244,7 @@ export const ReassignmentView: React.FC<ReassignmentViewProps> = ({
           ) : (
             <div className="p-4 bg-[#ffb800]/10 border border-[#ffb800]/30 rounded-2xl text-[#a16207] text-xs font-bold flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-[#ffb800]" />
-              There are no other available callers active right now to receive contacts. Please mark another caller available in the Daily Callers tab first.
+              There are no other available callers active right now to receive contacts. Please mark another caller available in the Permanent Callers tab first.
             </div>
           )}
         </div>

@@ -200,8 +200,8 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                   <span className="text-[#7c7896]">Go to <strong>Contacts & Import</strong> to upload your Excel (.xlsx) sheet.</span>
                 </div>
                 <div className="bg-[#fbf7fe] border border-[#e2d0fa] rounded-2xl p-3.5 shadow-xs">
-                  <strong className="block text-[#1e1b4b] font-black mb-1">2. Register Callers</strong>
-                  <span className="text-[#7c7896]">Go to <strong>Daily Callers</strong> to enter agents & WhatsApp numbers.</span>
+                  <strong className="block text-[#1e1b4b] font-black mb-1">2. Permanent Callers</strong>
+                  <span className="text-[#7c7896]">Callers in <strong>Permanent Callers</strong> abide permanently (no daily re-registration needed).</span>
                 </div>
                 <div className="bg-[#fbf7fe] border border-[#e2d0fa] rounded-2xl p-3.5 shadow-xs">
                   <strong className="block text-[#1e1b4b] font-black mb-1">3. Distribute Fairly</strong>
@@ -356,7 +356,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                   {activeCallersCount} Online for Distribution
                 </span>
                 <span className="px-2.5 py-1 rounded-xl text-[11px] font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa] whitespace-nowrap">
-                  Fleet Kept Constant
+                  Permanent Roster (Abiding)
                 </span>
               </div>
             </div>
@@ -746,7 +746,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
         <div className="p-5">
           {callers.length === 0 ? (
             <div className="text-center py-8 text-[#7c7896] text-sm">
-              No callers registered. Register callers in the &quot;Daily Callers&quot; tab.
+              No callers registered yet. Add callers in the &quot;Permanent Callers&quot; tab. Callers abide permanently and do not need daily re-entry.
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -70,7 +70,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
         </div>
         <h3 className="text-base font-black text-[#1e1b4b] mb-1">No Active Caller Available</h3>
         <p className="text-xs text-[#7c7896] font-medium leading-relaxed">
-          There are no callers registered in the system yet. Register daily callers in the Admin Portal to begin calling operations.
+          There are no callers registered in the system yet. Add callers in the Admin Portal. Callers abide permanently and remain constant across all dates.
         </p>
       </div>
     );

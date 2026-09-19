@@ -495,7 +495,7 @@ export default function App() {
           ) : (
             <div className="p-8 text-center bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm">
               <p className="text-sm text-[#7c7896] font-medium">
-                No callers registered in the system yet. Please access the Admin Portal below to configure the daily team.
+                No callers registered in the system yet. Please access the Admin Portal below to add your permanent caller team.
               </p>
               <button
                 type="button"

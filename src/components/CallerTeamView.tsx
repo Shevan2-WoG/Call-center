@@ -15,6 +15,8 @@ import {
   Target,
   Plus,
   Headset,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 
 interface CallerTeamViewProps {
@@ -128,20 +130,20 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
               <Users className="w-5 h-5 text-[#6c28f5]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-black text-[#1e1b4b]">
-                  Daily Calling Team &amp; Availability
+                  Calling Team Roster (Permanent &amp; Abiding)
                 </h2>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9]">
-                  {callingDate}
+                <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 inline-flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#558800]" />
+                  Entered Once • Abides Forever
                 </span>
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 hidden sm:inline-flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-[#88d600]" />
-                  Protected from Global Deletes
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9]">
+                  {callers.length} Registered
                 </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                Register callers &amp; WhatsApp numbers. Callers registered here are permanent and remain constant even when clearing Excel data.
+                Callers registered here abide permanently in the system. They are constant across all dates and never need to be re-entered each day.
               </p>
             </div>
           </div>
@@ -156,8 +158,23 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
           className="px-4 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-purple-600/20 cursor-pointer shrink-0"
         >
           <UserPlus className="w-4 h-4" />
-          Register New Caller
+          Add Permanent Caller
         </button>
+      </div>
+
+      {/* Permanence & Constancy Assurance Banner */}
+      <div className="bg-[#f2e7fe] border border-[#d8bbfb] rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+        <div className="w-8 h-8 rounded-xl bg-[#6c28f5] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <ShieldCheck className="w-4 h-4" />
+        </div>
+        <div className="space-y-0.5 text-xs">
+          <span className="font-black text-[#1e1b4b] block">
+            Caller Constancy Guarantee: No Daily Re-Registration Required
+          </span>
+          <p className="text-[#645f82] font-medium leading-relaxed">
+            Every caller profile, WhatsApp phone number, and individual call target entered below is saved permanently in the master registry. Even when you run an <strong>&ldquo;Erase Excel Data&rdquo;</strong> prompt to wipe uploaded contact spreadsheets, all callers and their details remain 100% intact and abiding.
+          </p>
+        </div>
       </div>
 
       {/* Callers Grid */}
@@ -166,9 +183,9 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
           <div className="w-14 h-14 rounded-2xl bg-[#f3efff] text-[#6c28f5] flex items-center justify-center mx-auto mb-4 shadow-xs">
             <Users className="w-7 h-7" />
           </div>
-          <h3 className="text-base font-black text-[#1e1b4b] mb-1">No Daily Callers Registered</h3>
+          <h3 className="text-base font-black text-[#1e1b4b] mb-1">No Callers Registered Yet</h3>
           <p className="text-xs text-[#7c7896] max-w-md mx-auto mb-6 font-medium">
-            Register the callers available to make calls today along with their WhatsApp phone numbers to distribute contacts equally.
+            Enter your call center agents once. They will abide permanently in the system and remain constant for all future campaigns and daily distributions.
           </p>
           <button
             type="button"
@@ -179,7 +196,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] text-white rounded-xl text-xs font-bold shadow-md shadow-purple-600/20 transition-all cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            Register First Caller
+            Add First Permanent Caller
           </button>
         </div>
       ) : (
@@ -200,7 +217,13 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="font-black text-[#1e1b4b] text-base">{caller.name}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-black text-[#1e1b4b] text-base">{caller.name}</h3>
+                    <span className="text-[10px] font-extrabold text-[#6c28f5] bg-[#f3efff] px-2 py-0.5 rounded-md border border-[#e2d0fa] inline-flex items-center gap-1" title="Permanent caller preserved across Excel deletes">
+                      <ShieldCheck className="w-3 h-3 text-[#6c28f5]" />
+                      Abiding
+                    </span>
+                  </div>
                   <span className="text-xs text-[#7c7896] mt-0.5 block font-medium">
                     Team: <strong className="text-[#1e1b4b]">{caller.teamGroup || 'General'}</strong>
                   </span>
@@ -346,10 +369,10 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
         <div className="fixed inset-0 bg-[#1e1b4b]/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
           <div className="bg-[#fbf7fe] rounded-3xl max-w-md w-full p-6 shadow-2xl border border-[#e2d0fa] animate-in fade-in zoom-in-95 duration-150">
             <h3 className="text-base font-black text-[#1e1b4b] mb-1">
-              {editingCaller ? 'Edit Caller Information' : 'Register Daily Caller'}
+              {editingCaller ? 'Edit Caller Information' : 'Add Permanent Caller'}
             </h3>
             <p className="text-xs text-[#7c7896] mb-4 font-medium">
-              Enter caller contact details and WhatsApp-enabled phone number for automatic distribution.
+              Enter caller contact details and WhatsApp phone number. Callers are registered once and abide permanently across all days and campaigns.
             </p>
 
             {formError && (
@@ -450,7 +473,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                   type="submit"
                   className="px-5 py-2 bg-[#6c28f5] hover:bg-[#5816d6] text-white rounded-xl font-bold transition-all cursor-pointer shadow-md shadow-purple-600/20"
                 >
-                  {editingCaller ? 'Update Caller' : 'Save Caller'}
+                  {editingCaller ? 'Update Caller Details' : 'Save Permanent Caller'}
                 </button>
               </div>
             </form>

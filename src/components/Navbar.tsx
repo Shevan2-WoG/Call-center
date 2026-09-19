@@ -64,7 +64,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const adminTabs = [
     { id: 'dashboard', label: 'Distribution & Ops', icon: Share2 },
     { id: 'contacts', label: 'Contacts & Import', icon: FileSpreadsheet },
-    { id: 'callers', label: 'Daily Callers Fleet', icon: Users },
+    { id: 'callers', label: 'Permanent Callers', icon: Users },
     { id: 'reassignment', label: 'Smart Reassignment', icon: RotateCcw },
     { id: 'reports', label: 'Reports & Export', icon: BarChart3 },
     { id: 'audit', label: 'Audit & Tech Log', icon: History },
@@ -170,11 +170,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="flex items-center gap-2">
                 {/* Caller Constancy Status Badge */}
                 <div
-                  title="The callers end is protected and kept constant during data erase operations"
+                  title="Callers are permanent and abide in the system without daily re-registration"
                   className="hidden lg:flex items-center gap-1 px-2 py-1 rounded-xl bg-[#88d600]/15 border border-[#88d600]/30 text-[#88d600] text-[11px] font-bold"
                 >
                   <UserCheck className="w-3.5 h-3.5 text-[#88d600]" />
-                  <span>Callers: {callers.length} (Constant)</span>
+                  <span>Callers: {callers.length} (Abiding)</span>
                 </div>
 
                 <button

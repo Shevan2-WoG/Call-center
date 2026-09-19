@@ -29,7 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'tech_lead'] },
     { id: 'contacts', label: 'Contacts & Import', icon: FileSpreadsheet, roles: ['admin', 'tech_lead'] },
-    { id: 'callers', label: 'Daily Callers', icon: Users, roles: ['admin', 'tech_lead'] },
+    { id: 'callers', label: 'Permanent Callers', icon: Users, roles: ['admin', 'tech_lead'] },
     { id: 'reassignment', label: 'Reassignment', icon: RotateCcw, roles: ['admin', 'tech_lead'] },
     { id: 'caller_dashboard', label: 'Caller Dashboard', icon: Headset, roles: ['admin', 'caller', 'tech_lead'] },
     { id: 'reports', label: 'Order / Reports', icon: BarChart3, roles: ['admin', 'tech_lead'] },
