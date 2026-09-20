@@ -3,6 +3,7 @@ import { Contact, ExcelUploadBatch } from '../types';
 import {
   parseContactExcel,
   downloadExcelTemplate,
+  downloadMultiSheetExcelDemo,
   ParseExcelResult,
   normalizePhoneNumber,
 } from '../services/excelService';
@@ -52,10 +53,22 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterSource, setFilterSource] = useState('all');
+  const [filterSheet, setFilterSheet] = useState('all');
 
   // Compute Excel batches
   const excelBatches = useMemo(() => {
     return getExcelUploadBatches(contacts);
+  }, [contacts]);
+
+  // Compute available sheets from contacts
+  const availableSheets = useMemo(() => {
+    const set = new Set<string>();
+    contacts.forEach((c) => {
+      if (c.sheetName && c.sheetName.trim()) {
+        set.add(c.sheetName.trim());
+      }
+    });
+    return Array.from(set);
   }, [contacts]);
 
   // Manual single contact modal state
@@ -71,9 +84,17 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   // Import flow state
   const [isParsing, setIsParsing] = useState(false);
   const [parseResult, setParseResult] = useState<ParseExcelResult | null>(null);
+  const [selectedPreviewSheet, setSelectedPreviewSheet] = useState<string>('all');
   const [previewTab, setPreviewTab] = useState<'valid' | 'invalid' | 'duplicates'>('valid');
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const [importSuccessMsg, setImportSuccessMsg] = useState<string | null>(null);
+
+  // Compute filtered valid contacts in preview by sheet
+  const displayedValidContacts = useMemo(() => {
+    if (!parseResult) return [];
+    if (selectedPreviewSheet === 'all') return parseResult.valid;
+    return parseResult.valid.filter((c) => c.sheetName === selectedPreviewSheet);
+  }, [parseResult, selectedPreviewSheet]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -132,6 +153,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       const existingPhones = new Set<string>(contacts.map((c) => c.normalizedPhone || c.phone));
       const res = await parseContactExcel(file, existingPhones);
       setParseResult(res);
+      setSelectedPreviewSheet('all');
       setPreviewTab(res.valid.length > 0 ? 'valid' : res.invalid.length > 0 ? 'invalid' : 'duplicates');
     } catch (err: any) {
       alert(`Error reading Excel file: ${err.message || 'Corrupted file'}`);
@@ -146,7 +168,11 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
     setIsSubmittingImport(true);
     try {
       await onImportContacts(parseResult.valid);
-      setImportSuccessMsg(`Successfully imported ${parseResult.valid.length} valid contacts!`);
+      setImportSuccessMsg(
+        `Successfully imported ${parseResult.valid.length} contacts from ${
+          parseResult.sheetSummaries.length > 1 ? `${parseResult.sheetSummaries.length} sheets` : 'sheet'
+        }!`
+      );
       setParseResult(null);
     } catch (err: any) {
       alert(`Import failed: ${err.message}`);
@@ -162,13 +188,17 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.phone.includes(searchTerm) ||
       (c.location && c.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+      (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (c.sheetName && c.sheetName.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || c.category === filterCategory;
     const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
     const matchesSource =
       filterSource === 'all' ||
       (c.source || 'Excel 1 (Initial Import)').trim().toLowerCase() === filterSource.trim().toLowerCase();
-    return matchesSearch && matchesCategory && matchesStatus && matchesSource;
+    const matchesSheet =
+      filterSheet === 'all' ||
+      (c.sheetName || '').trim().toLowerCase() === filterSheet.trim().toLowerCase();
+    return matchesSearch && matchesCategory && matchesStatus && matchesSource && matchesSheet;
   });
 
   const handleEraseBatch = async (sourceName: string, displayName: string) => {
@@ -233,6 +263,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               <Download className="w-3.5 h-3.5 text-[#6c28f5]" />
               Excel Template
             </button>
+            <button
+              type="button"
+              onClick={downloadMultiSheetExcelDemo}
+              className="px-3.5 py-2 rounded-xl border border-[#cbaff8] bg-white hover:bg-[#f5eaff] text-[#6c28f5] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              title="Download sample Excel with 7 separate sheets to test multi-sheet importing"
+            >
+              <Layers className="w-3.5 h-3.5 text-[#6c28f5]" />
+              Sample 7-Sheet Excel
+            </button>
           </div>
         </div>
 
@@ -276,7 +315,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               {isParsing ? 'Intelligently Processing Excel...' : 'Click to Upload Any Excel Contact Roster'}
             </p>
             <p className="text-xs text-[#7c7896] mt-1 max-w-xl mx-auto font-medium leading-relaxed">
-              Universal Excel Parser: Accepts any spreadsheet layout, column names, headerless rows, or phone formats (local, international, with dashes or spaces) with auto-normalization.
+              Universal Excel Parser: Accepts any spreadsheet layout, column names, headerless rows, or phone formats (local, international, with dashes or spaces) with auto-normalization. Reads and aggregates <strong>all sheets</strong> in the workbook automatically.
             </p>
           </div>
 
@@ -285,10 +324,16 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             <div className="mt-6 bg-[#f8f2fe] border border-[#e2d0fa] rounded-3xl p-5 shadow-xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#e2d0fa]">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-black text-[#1e1b4b]">
                       Excel Import Ready
                     </h3>
+                    {parseResult.sheetSummaries.length > 1 && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#6c28f5]/15 text-[#6c28f5] flex items-center gap-1 border border-[#cbaff8]">
+                        <Layers className="w-3.5 h-3.5 text-[#6c28f5]" />
+                        {parseResult.sheetSummaries.length} Sheets Read
+                      </span>
+                    )}
                     {parseResult.invalid.length === 0 && (
                       <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#88d600]/15 text-[#629c00] flex items-center gap-1">
                         <CheckCircle className="w-3 h-3 text-[#88d600]" />
@@ -297,7 +342,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     )}
                   </div>
                   <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                    Found {parseResult.valid.length} ready contacts from {parseResult.totalRows} sheet rows.
+                    Found {parseResult.valid.length} valid contacts across {parseResult.sheetSummaries.length}{' '}
+                    {parseResult.sheetSummaries.length > 1 ? 'sheets' : 'sheet'} ({parseResult.totalRows} sheet rows).
                   </p>
                 </div>
 
@@ -323,6 +369,62 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                 </div>
               </div>
 
+              {/* Multi-Sheet Detection & Sheet Selector Filter */}
+              {parseResult.sheetSummaries.length > 1 && (
+                <div className="my-3 p-3 bg-white rounded-2xl border border-[#cbaff8] shadow-xs">
+                  <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="p-1 rounded-lg bg-[#6c28f5]/10 text-[#6c28f5]">
+                        <Layers className="w-3.5 h-3.5" />
+                      </span>
+                      <span className="text-xs font-black text-[#1e1b4b]">
+                        All {parseResult.sheetSummaries.length} Sheets Read in this Excel:
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-[#7c7896] font-medium">
+                      Showing {displayedValidContacts.length} of {parseResult.valid.length} ready contacts
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPreviewSheet('all')}
+                      className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                        selectedPreviewSheet === 'all'
+                          ? 'bg-[#6c28f5] text-white shadow-xs'
+                          : 'bg-[#f8f2fe] text-[#7c7896] hover:text-[#1e1b4b] border border-[#e2d0fa]'
+                      }`}
+                    >
+                      All Sheets ({parseResult.valid.length})
+                    </button>
+                    {parseResult.sheetSummaries.map((s) => (
+                      <button
+                        key={s.sheetName}
+                        type="button"
+                        onClick={() => setSelectedPreviewSheet(s.sheetName)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5 ${
+                          selectedPreviewSheet === s.sheetName
+                            ? 'bg-[#6c28f5] text-white shadow-xs'
+                            : 'bg-[#f8f2fe] text-[#7c7896] hover:text-[#1e1b4b] border border-[#e2d0fa]'
+                        }`}
+                      >
+                        <span>{s.sheetName}</span>
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
+                            selectedPreviewSheet === s.sheetName
+                              ? 'bg-white/25 text-white'
+                              : 'bg-purple-100 text-purple-700'
+                          }`}
+                        >
+                          {s.validCount}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Status Tabs */}
               <div className="flex items-center gap-2 my-3">
                 <button
@@ -335,7 +437,8 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   }`}
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
-                  Ready to Import ({parseResult.valid.length})
+                  Ready to Import ({displayedValidContacts.length}
+                  {selectedPreviewSheet !== 'all' ? ` in ${selectedPreviewSheet}` : ''})
                 </button>
 
                 {parseResult.duplicates.length > 0 && (
@@ -375,6 +478,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#f8f2fe] border-b border-[#e2d0fa] text-[#7c7896] uppercase font-bold text-[11px]">
                       <tr>
+                        {parseResult.sheetSummaries.length > 1 && <th className="p-3">Sheet</th>}
                         <th className="p-3">Name</th>
                         <th className="p-3">Original Phone</th>
                         <th className="p-3">Normalized Phone</th>
@@ -384,8 +488,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#e2d0fa]">
-                      {parseResult.valid.map((c, i) => (
+                      {displayedValidContacts.map((c, i) => (
                         <tr key={i} className="hover:bg-[#f3e9fd]">
+                          {parseResult.sheetSummaries.length > 1 && (
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold text-[10px] border border-purple-200 whitespace-nowrap">
+                                {c.sheetName || 'Sheet 1'}
+                              </span>
+                            </td>
+                          )}
                           <td className="p-3 font-bold text-[#1e1b4b]">{c.name}</td>
                           <td className="p-3 font-mono text-[#7c7896]">{c.phone}</td>
                           <td className="p-3 font-mono text-[#6c28f5] font-bold">
@@ -408,6 +519,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#fff1f2] border-b border-[#fecdd3] text-[#be123c] uppercase font-bold text-[11px]">
                       <tr>
+                        {parseResult.sheetSummaries.length > 1 && <th className="p-3">Sheet</th>}
                         <th className="p-3">Row #</th>
                         <th className="p-3">Reason</th>
                         <th className="p-3">Raw Data Sample</th>
@@ -416,13 +528,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     <tbody className="divide-y divide-[#ffe4e6]">
                       {parseResult.invalid.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-4 text-center text-[#7c7896]">
+                          <td colSpan={parseResult.sheetSummaries.length > 1 ? 4 : 3} className="p-4 text-center text-[#7c7896]">
                             No invalid rows detected!
                           </td>
                         </tr>
                       ) : (
                         parseResult.invalid.map((item, i) => (
                           <tr key={i} className="hover:bg-[#fff1f2]/50">
+                            {parseResult.sheetSummaries.length > 1 && (
+                              <td className="p-3 font-bold text-[#6c28f5] text-[11px] whitespace-nowrap">
+                                {item.sheetName || 'Sheet 1'}
+                              </td>
+                            )}
                             <td className="p-3 font-bold text-[#1e1b4b]">Row {item.row}</td>
                             <td className="p-3 font-bold text-[#ff2a85]">{item.reason}</td>
                             <td className="p-3 font-mono text-[11px] text-[#7c7896]">
@@ -439,6 +556,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#fffbeb] border-b border-[#fef3c7] text-[#92400e] uppercase font-bold text-[11px]">
                       <tr>
+                        {parseResult.sheetSummaries.length > 1 && <th className="p-3">Sheet</th>}
                         <th className="p-3">Row #</th>
                         <th className="p-3">Issue</th>
                         <th className="p-3">Data</th>
@@ -447,13 +565,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                     <tbody className="divide-y divide-[#fef3c7]">
                       {parseResult.duplicates.length === 0 ? (
                         <tr>
-                          <td colSpan={3} className="p-4 text-center text-[#7c7896]">
+                          <td colSpan={parseResult.sheetSummaries.length > 1 ? 4 : 3} className="p-4 text-center text-[#7c7896]">
                             No duplicates detected.
                           </td>
                         </tr>
                       ) : (
                         parseResult.duplicates.map((item, i) => (
                           <tr key={i} className="hover:bg-[#fffbeb]/50">
+                            {parseResult.sheetSummaries.length > 1 && (
+                              <td className="p-3 font-bold text-[#6c28f5] text-[11px] whitespace-nowrap">
+                                {item.sheetName || 'Sheet 1'}
+                              </td>
+                            )}
                             <td className="p-3 font-bold text-[#1e1b4b]">Row {item.row}</td>
                             <td className="p-3 font-bold text-[#b47800]">{item.reason}</td>
                             <td className="p-3 font-mono text-[11px] text-[#7c7896]">
@@ -532,6 +655,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                           Done: <strong className="text-[#1e1b4b]">{batch.completedCount}</strong>
                         </span>
                       </div>
+
+                      {batch.sheets && batch.sheets.length > 1 && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-[#6c28f5] font-medium mt-1">
+                          <Layers className="w-3 h-3 text-[#6c28f5] shrink-0" />
+                          <span className="truncate" title={batch.sheets.join(', ')}>
+                            {batch.sheets.length} Sheets: {batch.sheets.join(', ')}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="pt-2.5 border-t border-[#f3e8fd] flex items-center justify-between gap-2">
@@ -622,6 +754,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   {excelBatches.map((batch) => (
                     <option key={batch.id} value={batch.sourceName}>
                       {batch.displayName} ({batch.totalContacts})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Sheet Filter */}
+            {availableSheets.length > 0 && (
+              <div className="flex items-center gap-1 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2 py-1.5 text-xs">
+                <Layers className="w-3 h-3 text-[#6c28f5]" />
+                <select
+                  value={filterSheet}
+                  onChange={(e) => setFilterSheet(e.target.value)}
+                  aria-label="Filter by Sheet"
+                  className="bg-transparent outline-none cursor-pointer text-[#1e1b4b] font-semibold max-w-[140px] truncate"
+                >
+                  <option value="all">All Sheets ({availableSheets.length})</option>
+                  {availableSheets.map((sheet) => (
+                    <option key={sheet} value={sheet}>
+                      {sheet}
                     </option>
                   ))}
                 </select>
@@ -769,8 +921,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                           {contact.status}
                         </span>
                       </td>
-                      <td className="p-3 text-[#7c7896] text-[11px] truncate max-w-xs">
-                        {contact.source || 'Direct'}
+                      <td className="p-3 text-[#7c7896] text-[11px] max-w-xs">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="truncate">{contact.source || 'Direct'}</span>
+                          {contact.sheetName && (
+                            <span className="px-1.5 py-0.5 rounded-md bg-purple-100 text-purple-700 font-bold text-[10px] border border-purple-200 shrink-0">
+                              {contact.sheetName}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       {onDeleteContact && (
                         <td className="p-3 text-right">

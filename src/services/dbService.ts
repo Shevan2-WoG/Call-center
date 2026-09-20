@@ -785,6 +785,7 @@ export function getExcelUploadBatches(contacts: Contact[], assignments: Assignme
       unassigned: number;
       completed: number;
       categories: Set<string>;
+      sheets: Set<string>;
       firstImportedAt?: string;
     }
   >();
@@ -798,6 +799,7 @@ export function getExcelUploadBatches(contacts: Contact[], assignments: Assignme
       unassigned: 0,
       completed: 0,
       categories: new Set<string>(),
+      sheets: new Set<string>(),
       firstImportedAt: c.createdAt,
     };
 
@@ -807,6 +809,7 @@ export function getExcelUploadBatches(contacts: Contact[], assignments: Assignme
     else existing.assigned += 1;
 
     if (c.category) existing.categories.add(c.category);
+    if (c.sheetName) existing.sheets.add(c.sheetName);
     if (!existing.firstImportedAt || c.createdAt < existing.firstImportedAt) {
       existing.firstImportedAt = c.createdAt;
     }
@@ -838,6 +841,7 @@ export function getExcelUploadBatches(contacts: Contact[], assignments: Assignme
       unassignedCount: data.unassigned,
       completedCount: data.completed,
       categories: Array.from(data.categories),
+      sheets: Array.from(data.sheets),
       firstImportedAt: data.firstImportedAt,
     });
   }
@@ -851,19 +855,27 @@ export function getExcelUploadBatches(contacts: Contact[], assignments: Assignme
  */
 export async function eraseSpecificExcels(
   excelSources: string[],
-  unassignedOnly = false
+  unassignedOnly = false,
+  specificSheets?: string[]
 ): Promise<{ contactsDeleted: number; assignmentsDeleted: number; callersPreserved: number }> {
   const allContacts = getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
   const allAssignments = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
   const callers = await getCallers();
 
   const sourcesSet = new Set(excelSources.map((s) => s.trim().toLowerCase()));
+  const sheetsSet =
+    specificSheets && specificSheets.length > 0
+      ? new Set(specificSheets.map((s) => s.trim().toLowerCase()))
+      : null;
 
   // Identify contacts to delete
   const contactsToDelete = allContacts.filter((c) => {
     const src = (c.source || 'Excel 1 (Initial Import)').trim().toLowerCase();
     const matchesSource = sourcesSet.has(src);
     if (!matchesSource) return false;
+    if (sheetsSet && c.sheetName) {
+      if (!sheetsSet.has(c.sheetName.trim().toLowerCase())) return false;
+    }
     if (unassignedOnly) {
       return c.status === 'unassigned';
     }

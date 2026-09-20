@@ -22,6 +22,7 @@ export interface Contact {
   category?: string;
   notes?: string;
   source?: string;
+  sheetName?: string;
   status: ContactStatus;
   createdAt: string;
   updatedAt?: string;
@@ -199,6 +200,7 @@ export interface ExcelUploadBatch {
   unassignedCount: number;
   completedCount: number;
   categories: string[];
+  sheets?: string[];
   firstImportedAt?: string;
 }
 

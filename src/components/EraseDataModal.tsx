@@ -344,6 +344,11 @@ export const EraseDataModal: React.FC<EraseDataModalProps> = ({
                                 <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa]">
                                   {batch.totalContacts} contacts
                                 </span>
+                                {batch.sheets && batch.sheets.length > 1 && (
+                                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 border border-purple-200">
+                                    {batch.sheets.length} sheets
+                                  </span>
+                                )}
                               </div>
 
                               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-[#7c7896] flex-wrap">
@@ -362,6 +367,12 @@ export const EraseDataModal: React.FC<EraseDataModalProps> = ({
                                   Completed: <strong>{batch.completedCount}</strong>
                                 </span>
                               </div>
+
+                              {batch.sheets && batch.sheets.length > 1 && (
+                                <div className="mt-1 text-[10.5px] text-[#6c28f5] font-medium truncate">
+                                  Sheets: {batch.sheets.join(', ')}
+                                </div>
+                              )}
                             </div>
                           </div>
 

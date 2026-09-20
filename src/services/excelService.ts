@@ -1,11 +1,24 @@
 import * as XLSX from 'xlsx';
 import { Contact, CallAttempt, Assignment, DailyReportSummary, CALL_OUTCOMES } from '../types';
 
-export interface ParseExcelResult {
-  valid: Omit<Contact, 'id' | 'createdAt' | 'status'>[];
-  invalid: { row: number; data: any; reason: string }[];
-  duplicates: { row: number; data: any; reason: string }[];
+export interface SheetParseSummary {
+  sheetName: string;
+  sheetIndex: number;
   totalRows: number;
+  validCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  columnsDetected: string[];
+}
+
+export interface ParseExcelResult {
+  valid: (Omit<Contact, 'id' | 'createdAt' | 'status'> & { sheetName?: string })[];
+  invalid: { row: number; data: any; reason: string; sheetName?: string }[];
+  duplicates: { row: number; data: any; reason: string; sheetName?: string }[];
+  totalRows: number;
+  sheetsFound: string[];
+  sheetSummaries: SheetParseSummary[];
+  multiSheet: boolean;
 }
 
 /**
@@ -158,78 +171,89 @@ export function normalizePhoneNumber(
  * - For records missing phones, auto-assigns a valid provisional ID so the sheet imports 100% cleanly without showing "invalid" errors
  * - Preserves extra columns (email, company, notes) inside contact notes
  */
-export async function parseContactExcel(
-  file: File,
-  existingPhones: Set<string>
-): Promise<ParseExcelResult> {
-  const data = await file.arrayBuffer();
-  const workbook = XLSX.read(data, { type: 'array' });
+// Shared Keywords definitions for intelligent column auto-detection
+const matchesKeyword = (str: string, keywords: string[]): boolean => {
+  const lower = str.toLowerCase().trim();
+  return keywords.some(k => lower === k || lower.includes(k));
+};
 
-  // Find sheet with the most non-empty rows
-  let bestSheetName = workbook.SheetNames[0];
-  let bestRows: any[][] = [];
-  let maxDataCount = -1;
+const NAME_KEYWORDS = [
+  'full name', 'contact name', 'customer name', 'client name', 'student name', 'member name',
+  'participant name', 'person name', 'lead name', 'first name', 'last name', 'surname',
+  'given name', 'other name', 'names', 'name', 'nom', 'nombre', 'client', 'customer',
+  'student', 'member', 'person', 'lead', 'applicant', 'patient', 'attendee', 'caller', 'user',
+  'beneficiary', 'recipient', 'contact_person', 'title'
+];
 
-  for (const sheetName of workbook.SheetNames) {
-    const ws = workbook.Sheets[sheetName];
-    if (!ws) continue;
-    const grid: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-    const nonEmptyCount = grid.filter(r => r && r.some(c => cellToString(c).length > 0)).length;
-    if (nonEmptyCount > maxDataCount) {
-      maxDataCount = nonEmptyCount;
-      bestSheetName = sheetName;
-      bestRows = grid;
-    }
+const PHONE_KEYWORDS = [
+  'phone number', 'phone no', 'phone_no', 'phone_number', 'phonenumber', 'mobile number',
+  'mobile no', 'mobile_no', 'mobile_number', 'telephone number', 'telephone no', 'tel no',
+  'tel_no', 'whatsapp number', 'whatsapp no', 'contact number', 'contact no', 'cell number',
+  'cell no', 'cellphone', 'cellular', 'msisdn', 'phone', 'mobile', 'telephone', 'tel',
+  'cell', 'whatsapp', 'number', 'no.', 'digits', 'line', 'dial', 'calling', 'contact', 'telecom'
+];
+
+const LOCATION_KEYWORDS = [
+  'location', 'district', 'city', 'town', 'address', 'region', 'area', 'village',
+  'subcounty', 'country', 'place', 'residence', 'zone', 'parish', 'state', 'station', 'branch'
+];
+
+const CATEGORY_KEYWORDS = [
+  'category', 'type', 'segment', 'group', 'role', 'tag', 'class', 'status',
+  'grade', 'department', 'batch', 'cohort', 'tier', 'level', 'classification'
+];
+
+const NOTES_KEYWORDS = [
+  'notes', 'note', 'remarks', 'remark', 'comment', 'comments', 'description',
+  'details', 'info', 'reason', 'feedback', 'message', 'background', 'preference', 'extra'
+];
+
+/**
+ * Parses an individual sheet from an Excel workbook with independent header & column detection
+ */
+function parseSingleSheet(
+  sheetRows: any[][],
+  sheetName: string,
+  sheetIndex: number,
+  fileName: string,
+  existingPhones: Set<string>,
+  seenInFile: Set<string>,
+  isMultiSheet: boolean
+): {
+  valid: (Omit<Contact, 'id' | 'createdAt' | 'status'> & { sheetName?: string })[];
+  invalid: { row: number; data: any; reason: string; sheetName?: string }[];
+  duplicates: { row: number; data: any; reason: string; sheetName?: string }[];
+  summary: SheetParseSummary;
+} {
+  const valid: (Omit<Contact, 'id' | 'createdAt' | 'status'> & { sheetName?: string })[] = [];
+  const invalid: { row: number; data: any; reason: string; sheetName?: string }[] = [];
+  const duplicates: { row: number; data: any; reason: string; sheetName?: string }[] = [];
+
+  const nonEmptyRows = sheetRows.filter(r => r && r.some(c => cellToString(c).trim().length > 0));
+  if (nonEmptyRows.length === 0) {
+    return {
+      valid,
+      invalid,
+      duplicates,
+      summary: {
+        sheetName,
+        sheetIndex,
+        totalRows: 0,
+        validCount: 0,
+        duplicateCount: 0,
+        invalidCount: 0,
+        columnsDetected: [],
+      },
+    };
   }
 
-  if (bestRows.length === 0) {
-    return { valid: [], invalid: [], duplicates: [], totalRows: 0 };
-  }
-
-  // Keywords definitions
-  const matchesKeyword = (str: string, keywords: string[]): boolean => {
-    const lower = str.toLowerCase().trim();
-    return keywords.some(k => lower === k || lower.includes(k));
-  };
-
-  const NAME_KEYWORDS = [
-    'full name', 'contact name', 'customer name', 'client name', 'student name', 'member name',
-    'participant name', 'person name', 'lead name', 'first name', 'last name', 'surname',
-    'given name', 'other name', 'names', 'name', 'nom', 'nombre', 'client', 'customer',
-    'student', 'member', 'person', 'lead', 'applicant', 'patient', 'attendee', 'caller', 'user',
-    'beneficiary', 'recipient', 'contact_person', 'title'
-  ];
-
-  const PHONE_KEYWORDS = [
-    'phone number', 'phone no', 'phone_no', 'phone_number', 'phonenumber', 'mobile number',
-    'mobile no', 'mobile_no', 'mobile_number', 'telephone number', 'telephone no', 'tel no',
-    'tel_no', 'whatsapp number', 'whatsapp no', 'contact number', 'contact no', 'cell number',
-    'cell no', 'cellphone', 'cellular', 'msisdn', 'phone', 'mobile', 'telephone', 'tel',
-    'cell', 'whatsapp', 'number', 'no.', 'digits', 'line', 'dial', 'calling', 'contact', 'telecom'
-  ];
-
-  const LOCATION_KEYWORDS = [
-    'location', 'district', 'city', 'town', 'address', 'region', 'area', 'village',
-    'subcounty', 'country', 'place', 'residence', 'zone', 'parish', 'state', 'station', 'branch'
-  ];
-
-  const CATEGORY_KEYWORDS = [
-    'category', 'type', 'segment', 'group', 'role', 'tag', 'class', 'status',
-    'grade', 'department', 'batch', 'cohort', 'tier', 'level', 'classification'
-  ];
-
-  const NOTES_KEYWORDS = [
-    'notes', 'note', 'remarks', 'remark', 'comment', 'comments', 'description',
-    'details', 'info', 'reason', 'feedback', 'message', 'background', 'preference', 'extra'
-  ];
-
-  // Detect header row by scoring top 20 rows
+  // 1. Detect header row in this sheet by scoring top 20 rows
   let headerRowIndex = -1;
   let bestScore = 0;
+  const rowsToScan = Math.min(20, sheetRows.length);
 
-  const rowsToScan = Math.min(20, bestRows.length);
   for (let r = 0; r < rowsToScan; r++) {
-    const row = bestRows[r];
+    const row = sheetRows[r];
     if (!row || row.every(c => !cellToString(c))) continue;
 
     let rowScore = 0;
@@ -249,7 +273,6 @@ export async function parseContactExcel(
       if (matchesKeyword(str, NOTES_KEYWORDS)) rowScore += 4;
     });
 
-    // If row contains actual numbers that look like phone numbers, it is likely data
     if (hasPhoneLikeNumber) {
       rowScore -= 15;
     }
@@ -260,7 +283,7 @@ export async function parseContactExcel(
     }
   }
 
-  // Determine column mapping
+  // 2. Map columns for this sheet
   let nameCol = -1;
   let firstNameCol = -1;
   let lastNameCol = -1;
@@ -270,13 +293,16 @@ export async function parseContactExcel(
   let categoryCol = -1;
   let notesCol = -1;
   const otherCols: { index: number; label: string }[] = [];
+  const columnsDetected: string[] = [];
 
   if (headerRowIndex >= 0) {
-    const headerRow = bestRows[headerRowIndex];
+    const headerRow = sheetRows[headerRowIndex];
     headerRow.forEach((cell, c) => {
       const label = cellToString(cell).trim();
       const lower = label.toLowerCase();
       if (!label) return;
+
+      columnsDetected.push(label);
 
       if (matchesKeyword(lower, ['first name', 'fname', 'given name'])) {
         firstNameCol = c;
@@ -307,8 +333,8 @@ export async function parseContactExcel(
   // Fallback: If phone column wasn't detected by header, detect by cell data frequency
   if (phoneCol === -1) {
     const colPhoneCounts = new Map<number, number>();
-    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, bestRows.length); r++) {
-      const row = bestRows[r];
+    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, sheetRows.length); r++) {
+      const row = sheetRows[r];
       if (!row) continue;
       row.forEach((cell, c) => {
         const str = cellToString(cell).replace(/\D/g, '');
@@ -329,13 +355,12 @@ export async function parseContactExcel(
   // Fallback: If name column wasn't detected, detect by text frequency
   if (nameCol === -1 && firstNameCol === -1) {
     const colNameCounts = new Map<number, number>();
-    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, bestRows.length); r++) {
-      const row = bestRows[r];
+    for (let r = dataStartIndex; r < Math.min(dataStartIndex + 40, sheetRows.length); r++) {
+      const row = sheetRows[r];
       if (!row) continue;
       row.forEach((cell, c) => {
         if (c === phoneCol || c === altPhoneCol) return;
         const str = cellToString(cell).trim();
-        // Check for personal name pattern: letters, spaces, 2 to 45 chars
         if (/^[A-Za-z\s\.'\-]{2,45}$/.test(str) && !/total|summary|phone|tel|district|kampala/i.test(str)) {
           colNameCounts.set(c, (colNameCounts.get(c) || 0) + 1);
         }
@@ -350,18 +375,13 @@ export async function parseContactExcel(
     });
   }
 
-  const valid: Omit<Contact, 'id' | 'createdAt' | 'status'>[] = [];
-  const invalid: { row: number; data: any; reason: string }[] = [];
-  const duplicates: { row: number; data: any; reason: string }[] = [];
-  const seenInFile = new Set<string>();
+  let sheetRowsProcessed = 0;
 
-  let actualRowsProcessed = 0;
-
-  for (let r = dataStartIndex; r < bestRows.length; r++) {
-    const row = bestRows[r];
+  for (let r = dataStartIndex; r < sheetRows.length; r++) {
+    const row = sheetRows[r];
     if (!row) continue;
 
-    // 1. Skip completely empty rows silently
+    // Skip completely empty rows
     const isRowEmpty = row.every(cell => !cellToString(cell).trim());
     if (isRowEmpty) {
       continue;
@@ -370,8 +390,7 @@ export async function parseContactExcel(
     const rowCells = row.map(cellToString).map(s => s.trim()).filter(Boolean);
     const combinedRowText = rowCells.join(' ');
 
-    // 2. Identify and silently skip document metadata, section banners, and summary rows:
-    // E.g. "Report generated on 2025-04-12", "TOTAL LEADS: 500", "Page 1 of 5", "Prepared by Admin"
+    // Skip document banners, summary rows, or footers
     if (
       rowCells.length === 1 &&
       (combinedRowText.length < 3 || /total|summary|sheet|report|page|confidential|approved|date:|prepared/i.test(combinedRowText))
@@ -382,14 +401,13 @@ export async function parseContactExcel(
       continue;
     }
 
-    actualRowsProcessed++;
+    sheetRowsProcessed++;
     const rowNumber = r + 1;
 
-    // 3. Extract phone numbers from row
+    // Extract phone
     let rawPhone = phoneCol >= 0 ? cellToString(row[phoneCol]) : '';
     let altPhone = altPhoneCol >= 0 ? cellToString(row[altPhoneCol]) : '';
 
-    // If primary phone cell has no digits, scan other cells in this row for any digit sequences
     if (rawPhone.replace(/\D/g, '').length < 4) {
       for (let c = 0; c < row.length; c++) {
         if (c === nameCol || c === firstNameCol || c === lastNameCol) continue;
@@ -404,7 +422,6 @@ export async function parseContactExcel(
     let phoneRes = normalizePhoneNumber(rawPhone);
     let normalizedPhone = phoneRes.isValid ? phoneRes.normalized : '';
 
-    // If still not valid, search for ANY digit sequence anywhere in the row (e.g., inside notes or name column)
     if (!normalizedPhone) {
       for (let c = 0; c < row.length; c++) {
         const cellText = cellToString(row[c]);
@@ -420,7 +437,7 @@ export async function parseContactExcel(
       }
     }
 
-    // 4. Extract Name
+    // Extract Name
     let name = '';
     if (firstNameCol >= 0 && lastNameCol >= 0) {
       const fn = cellToString(row[firstNameCol]);
@@ -430,7 +447,6 @@ export async function parseContactExcel(
     if (!name && nameCol >= 0) {
       name = cellToString(row[nameCol]);
     }
-    // If name is still blank, search other text cells
     if (!name) {
       for (let c = 0; c < row.length; c++) {
         if (c === phoneCol || c === altPhoneCol || c === locationCol) continue;
@@ -442,41 +458,40 @@ export async function parseContactExcel(
       }
     }
 
-    // 5. If STILL NO PHONE:
-    // Universal resilience: Rather than showing "Invalid" and breaking the user's Excel import,
-    // if the row has any content (e.g. Name or Location or Notes), create a clean provisional contact!
+    // If still no phone: Assign resilient clean provisional ID with sheet identifier
     if (!normalizedPhone) {
       if (name || rowCells.length >= 2) {
-        // Create clean provisional phone reference
-        normalizedPhone = `+256-REF-${rowNumber}`;
+        normalizedPhone = `+256-REF-S${sheetIndex}-R${rowNumber}`;
         rawPhone = 'Pending Phone Number';
         if (!name) {
-          name = `Lead #${rowNumber}`;
+          name = `Lead #${rowNumber} (${sheetName})`;
         }
       } else {
-        // Just a stray stray single word or number (e.g. decorative divider), skip silently
         continue;
       }
     }
 
-    // If name is blank but phone is present:
     if (!name) {
       name = `Contact ${normalizedPhone}`;
     }
 
-    // 6. Extract Location
+    // Extract Location
     let location = locationCol >= 0 ? cellToString(row[locationCol]) : '';
     if (!location) {
       location = 'Unspecified';
     }
 
-    // 7. Extract Category
+    // Extract Category: If no explicit category column, use sheetName if it's descriptive
     let category = categoryCol >= 0 ? cellToString(row[categoryCol]) : '';
     if (!category) {
-      category = 'General';
+      if (sheetName && !/^sheet\d+$/i.test(sheetName.trim())) {
+        category = sheetName.trim();
+      } else {
+        category = 'General';
+      }
     }
 
-    // 8. Extract Notes and merge extra columns
+    // Extract Notes and include sheet tag if workbook is multi-sheet
     let notes = notesCol >= 0 ? cellToString(row[notesCol]) : '';
     if (phoneRes.secondaryPhone) {
       notes = notes ? `${notes} | Alt Phone: ${phoneRes.secondaryPhone}` : `Alt Phone: ${phoneRes.secondaryPhone}`;
@@ -491,16 +506,22 @@ export async function parseContactExcel(
         extraPieces.push(`${col.label}: ${val}`);
       }
     });
+
+    if (isMultiSheet) {
+      extraPieces.push(`Sheet: ${sheetName}`);
+    }
+
     if (extraPieces.length > 0) {
       notes = notes ? `${notes} | ${extraPieces.join(' | ')}` : extraPieces.join(' | ');
     }
 
-    // 9. Deduplication handling within file
+    // Deduplication within file across all sheets
     if (seenInFile.has(normalizedPhone)) {
       duplicates.push({
         row: rowNumber,
+        sheetName,
         data: row,
-        reason: `Duplicate phone number (${normalizedPhone}) in file`,
+        reason: `Duplicate phone number (${normalizedPhone}) in sheet "${sheetName}"`,
       });
       continue;
     }
@@ -515,7 +536,8 @@ export async function parseContactExcel(
       location: location.trim() || 'Unspecified',
       category: category.trim() || 'General',
       notes: notes.trim() + (isExistingInDb ? (notes ? ' | [Existing Contact]' : '[Existing Contact]') : ''),
-      source: file.name,
+      source: fileName,
+      sheetName,
     });
   }
 
@@ -523,7 +545,86 @@ export async function parseContactExcel(
     valid,
     invalid,
     duplicates,
-    totalRows: actualRowsProcessed,
+    summary: {
+      sheetName,
+      sheetIndex,
+      totalRows: sheetRowsProcessed,
+      validCount: valid.length,
+      duplicateCount: duplicates.length,
+      invalidCount: invalid.length,
+      columnsDetected,
+    },
+  };
+}
+
+/**
+ * Universal Intelligent Multi-Sheet Contact Excel Parser:
+ * - Reads ALL sheets in the uploaded workbook (whether 1, 3, 7, or more sheets)
+ * - Detects independent headers & columns for each sheet separately
+ * - Handles varied layouts across sheets seamlessly
+ * - Aggregates all sheets into a unified import list while preserving sheet source metadata
+ * - Provides per-sheet and total validation statistics
+ */
+export async function parseContactExcel(
+  file: File,
+  existingPhones: Set<string>
+): Promise<ParseExcelResult> {
+  const data = await file.arrayBuffer();
+  const workbook = XLSX.read(data, { type: 'array' });
+
+  const sheetNames = workbook.SheetNames || [];
+  if (sheetNames.length === 0) {
+    return {
+      valid: [],
+      invalid: [],
+      duplicates: [],
+      totalRows: 0,
+      sheetsFound: [],
+      sheetSummaries: [],
+      multiSheet: false,
+    };
+  }
+
+  const isMultiSheet = sheetNames.length > 1;
+  const allValid: (Omit<Contact, 'id' | 'createdAt' | 'status'> & { sheetName?: string })[] = [];
+  const allInvalid: { row: number; data: any; reason: string; sheetName?: string }[] = [];
+  const allDuplicates: { row: number; data: any; reason: string; sheetName?: string }[] = [];
+  const sheetSummaries: SheetParseSummary[] = [];
+  const seenInFile = new Set<string>();
+  let grandTotalRows = 0;
+
+  // Process EVERY single sheet in the workbook
+  for (let s = 0; s < sheetNames.length; s++) {
+    const sheetName = sheetNames[s];
+    const ws = workbook.Sheets[sheetName];
+    if (!ws) continue;
+
+    const sheetRows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+    const sheetRes = parseSingleSheet(
+      sheetRows,
+      sheetName,
+      s + 1,
+      file.name,
+      existingPhones,
+      seenInFile,
+      isMultiSheet
+    );
+
+    allValid.push(...sheetRes.valid);
+    allInvalid.push(...sheetRes.invalid);
+    allDuplicates.push(...sheetRes.duplicates);
+    sheetSummaries.push(sheetRes.summary);
+    grandTotalRows += sheetRes.summary.totalRows;
+  }
+
+  return {
+    valid: allValid,
+    invalid: allInvalid,
+    duplicates: allDuplicates,
+    totalRows: grandTotalRows,
+    sheetsFound: sheetNames,
+    sheetSummaries,
+    multiSheet: isMultiSheet,
   };
 }
 
@@ -581,6 +682,75 @@ export function downloadExcelTemplate() {
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts_Template');
   XLSX.writeFile(workbook, 'KIU_Manifest_Contact_Import_Template.xlsx');
+}
+
+/**
+ * Generates a realistic sample 7-sheet Excel workbook to demonstrate multi-sheet parsing
+ */
+export function downloadMultiSheetExcelDemo() {
+  const workbook = XLSX.utils.book_new();
+
+  const sheetsData: { name: string; rows: Record<string, string>[] }[] = [
+    {
+      name: 'Kampala_Campus',
+      rows: [
+        { 'Full Name': 'Derrick Ssebunya', 'Phone Number': '0701234101', 'Location': 'Kampala Central', 'Category': 'Undergraduate', 'Notes': 'Morning session preferred' },
+        { 'Full Name': 'Rachael Nakimera', 'Phone Number': '0772345102', 'Location': 'Ntinda', 'Category': 'Postgraduate', 'Notes': 'Wants MBA course outline' },
+        { 'Full Name': 'Brian Okot', 'Phone Number': '0753456103', 'Location': 'Kansanga', 'Category': 'Diploma', 'Notes': 'Inquired about hostel accommodations' },
+      ],
+    },
+    {
+      name: 'Wakiso_District',
+      rows: [
+        { 'Customer Name': 'Agnes Nabukenya', 'Mobile No': '0784567104', 'Town': 'Nansana', 'Role': 'Applicant', 'Remarks': 'Called via radio advertisement' },
+        { 'Customer Name': 'Isaac Kato', 'Mobile No': '0705678105', 'Town': 'Kira', 'Role': 'Student', 'Remarks': 'Needs weekend class details' },
+        { 'Customer Name': 'Sarah Namusisi', 'Mobile No': '0776789106', 'Town': 'Entebbe', 'Role': 'Parent', 'Remarks': 'Inquiring for son in engineering' },
+      ],
+    },
+    {
+      name: 'Jinja_Inquiries',
+      rows: [
+        { 'Contact Name': 'Moses Waiswa', 'Tel': '0757890107', 'District': 'Jinja', 'Type': 'Lead', 'Details': 'Interested in IT certifications' },
+        { 'Contact Name': 'Fatuma Nabirye', 'Tel': '0788901108', 'District': 'Bugembe', 'Type': 'Applicant', 'Details': 'Wants tuition breakdown' },
+      ],
+    },
+    {
+      name: 'Mbarara_Hub',
+      rows: [
+        { 'Participant Name': 'Edison Tumuhimbise', 'Phone': '0709012109', 'City': 'Mbarara', 'Status': 'Student', 'Note': 'Nursing program applicant' },
+        { 'Participant Name': 'Peace Kemigisha', 'Phone': '0770123110', 'City': 'Kashari', 'Status': 'Visitor', 'Note': 'Follow-up requested on Monday' },
+      ],
+    },
+    {
+      name: 'Gulu_Regional',
+      rows: [
+        { 'Client': 'Denis Opiyo', 'Telephone': '0781234111', 'Area': 'Gulu City', 'Group': 'Student', 'Comment': 'Agriculture degree interest' },
+        { 'Client': 'Lucy Auma', 'Telephone': '0752345112', 'Area': 'Layibi', 'Group': 'Scholarship', 'Comment': 'Seeking merit scholarship guidance' },
+      ],
+    },
+    {
+      name: 'Corporate_Leads',
+      rows: [
+        { 'Contact Person': 'Charles Mukasa', 'Office Line': '0703456113', 'Station': 'Industrial Area', 'Department': 'Corporate HR', 'Info': 'Executive training for 15 staff members' },
+        { 'Contact Person': 'Brenda Atuhaire', 'Office Line': '0774567114', 'Station': 'Kololo', 'Department': 'Finance', 'Info': 'Custom data science boot camp' },
+      ],
+    },
+    {
+      name: 'Alumni_Referrals',
+      rows: [
+        { 'Candidate': 'Samuel Baguma', 'Cell': '0785678115', 'Region': 'Fort Portal', 'Cohort': 'Referral', 'Extra': 'Referred by Eng. Kenneth (Class of 2022)' },
+        { 'Candidate': 'Christine Akello', 'Cell': '0706789116', 'Region': 'Soroti', 'Cohort': 'Referral', 'Extra': 'Recommended by Dr. Betty' },
+      ],
+    },
+  ];
+
+  sheetsData.forEach((sheet) => {
+    const ws = XLSX.utils.json_to_sheet(sheet.rows);
+    ws['!cols'] = [{ wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 38 }];
+    XLSX.utils.book_append_sheet(workbook, ws, sheet.name);
+  });
+
+  XLSX.writeFile(workbook, 'KIU_7_Sheets_MultiSheet_Demo.xlsx');
 }
 
 /**
