@@ -189,3 +189,22 @@ export interface DailyReportSummary {
     completionRate: number;
   }[];
 }
+
+export interface ExcelUploadBatch {
+  id: string;
+  sourceName: string;
+  displayName: string;
+  totalContacts: number;
+  assignedCount: number;
+  unassignedCount: number;
+  completedCount: number;
+  categories: string[];
+  firstImportedAt?: string;
+}
+
+export interface SelectiveEraseOptions {
+  excelSources?: string[];
+  unassignedOnly?: boolean;
+  clearAssignments?: boolean;
+  clearCallLogs?: boolean;
+}

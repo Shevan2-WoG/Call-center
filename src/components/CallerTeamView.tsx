@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  Trash2,
   Edit2,
   ExternalLink,
   Target,
@@ -17,13 +16,14 @@ import {
   Headset,
   ShieldCheck,
   Sparkles,
+  Lock,
 } from 'lucide-react';
 
 interface CallerTeamViewProps {
   callers: Caller[];
   callingDate: string;
   onSaveCaller: (caller: Caller) => Promise<void>;
-  onDeleteCaller: (id: string) => Promise<void>;
+  onDeleteCaller?: (id: string) => Promise<void>;
   onTriggerReassignment: (caller: Caller) => void;
   onSwitchToCaller?: (callerId: string) => void;
 }
@@ -168,11 +168,14 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
           <ShieldCheck className="w-4 h-4" />
         </div>
         <div className="space-y-0.5 text-xs">
-          <span className="font-black text-[#1e1b4b] block">
-            Caller Constancy Guarantee: No Daily Re-Registration Required
+          <span className="font-black text-[#1e1b4b] flex items-center gap-1.5">
+            <span>Caller Protection Policy: Callers Can Only Be Added — Never Deleted</span>
+            <span className="px-2 py-0.2 bg-[#6c28f5] text-white text-[10px] font-extrabold rounded-md flex items-center gap-0.5">
+              <Lock className="w-2.5 h-2.5" /> Undeletable
+            </span>
           </span>
           <p className="text-[#645f82] font-medium leading-relaxed">
-            Every caller profile, WhatsApp phone number, and individual call target entered below is saved permanently in the master registry. Even when you run an <strong>&ldquo;Erase Excel Data&rdquo;</strong> prompt to wipe uploaded contact spreadsheets, all callers and their details remain 100% intact and abiding.
+            Every caller profile, WhatsApp phone number, and target entered is saved permanently. Callers <strong>cannot be deleted</strong>, guaranteeing that your historical logs, daily metrics, and team rosters remain unbroken. If an agent is not working today, simply toggle their status to <strong>&ldquo;Off&rdquo;</strong> (Unavailable) to skip them from assignment runs. During any data erase or Excel reset, callers are 100% exempt and protected.
           </p>
         </div>
       </div>
@@ -344,18 +347,12 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(`Remove ${caller.name} from the team?`)) {
-                        onDeleteCaller(caller.id);
-                      }
-                    }}
-                    className="p-1.5 text-[#7c7896] hover:text-[#ff2a85] hover:bg-[#fff1f2] rounded-lg transition-colors cursor-pointer"
-                    title="Delete caller"
+                  <span
+                    className="p-1.5 text-purple-600 bg-[#f3efff] border border-[#e2d0fa] rounded-lg flex items-center justify-center cursor-help transition-all"
+                    title="Permanent Caller: Callers cannot be deleted from the system. If unavailable, toggle status to 'Off'."
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#6c28f5]" />
+                  </span>
                 </div>
               </div>
             </div>

@@ -180,11 +180,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <button
                   type="button"
                   onClick={onEmptyData}
-                  title="Erase only the imported Excel contacts. The callers end is strictly kept constant."
+                  title="Selectively erase specific uploaded Excel spreadsheets or clear model items. Callers are permanent and protected."
                   className="text-xs px-2.5 py-1.5 rounded-xl border border-red-400/30 bg-red-500/20 hover:bg-red-500/30 text-red-100 flex items-center gap-1.5 transition-colors cursor-pointer font-bold"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-red-300" />
-                  <span>Erase Excel Data</span>
+                  <span>Selective Erase</span>
                 </button>
 
                 <button

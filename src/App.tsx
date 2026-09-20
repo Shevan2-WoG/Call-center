@@ -8,6 +8,7 @@ import {
   AuditLog,
   UserRole,
   DailyTeam,
+  SelectiveEraseOptions,
 } from './types';
 import {
   getContacts,
@@ -27,6 +28,8 @@ import {
   logAudit,
   seedInitialDataIfEmpty,
   eraseExcelDataOnly,
+  eraseSpecificExcels,
+  eraseSelectiveModelData,
   clearAllDatabaseData,
   clearUploadedContacts,
   clearDailyAssignments,
@@ -41,6 +44,7 @@ import { ReportsView } from './components/ReportsView';
 import { AuditView } from './components/AuditView';
 import { HomeView } from './components/HomeView';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { EraseDataModal } from './components/EraseDataModal';
 import { Lock } from 'lucide-react';
 
 export default function App() {
@@ -71,6 +75,8 @@ export default function App() {
   const [selectedCallerId, setSelectedCallerId] = useState<string>('');
   // For quick jump from caller status toggle to reassignment
   const [reassignmentTargetCallerId, setReassignmentTargetCallerId] = useState<string | undefined>(undefined);
+  // Erase confirmation & selective wipe modal state
+  const [isEraseModalOpen, setIsEraseModalOpen] = useState(false);
 
   // Load all data
   const loadData = useCallback(async () => {
@@ -202,23 +208,11 @@ export default function App() {
     }
   };
 
-  // Caller Delete Handler
-  const handleDeleteCaller = async (id: string) => {
-    setIsSyncing(true);
-    try {
-      await deleteCaller(id);
-      await logAudit({
-        userId: 'admin',
-        userName: 'Administrator',
-        userRole: 'admin',
-        action: 'CALLER_DELETED',
-        entity: 'callers',
-        metadata: { callerId: id },
-      });
-      await loadData();
-    } finally {
-      setIsSyncing(false);
-    }
+  // Caller Delete Handler (Blocked by system policy: Callers are permanent and cannot be deleted)
+  const handleDeleteCaller = async (_id: string) => {
+    alert(
+      'Policy Restriction: Callers are permanent and cannot be deleted from the system.\n\nIf this caller is unavailable today, please toggle their status to "Off" (Unavailable) in the Permanent Callers management screen.'
+    );
   };
 
   // Call Feedback Attempt Save Handler
@@ -269,75 +263,86 @@ export default function App() {
     }
   };
 
-  // Erase uploaded Excel data (Strictly Excel only; callers end is kept constant!)
-  const handleEmptyAllData = async () => {
-    if (
-      window.confirm(
-        'Are you sure you want to erase the uploaded Excel contacts?\n\n✔ Erasing will ONLY apply to the Excel contacts.\n✔ The callers end (all registered callers, phone numbers, WhatsApp details, and caller records) will NOT be erased and is strictly kept constant.'
-      )
-    ) {
-      setIsSyncing(true);
-      try {
-        const { callersPreserved } = await eraseExcelDataOnly();
-        setContacts([]);
-        setAssignments([]);
-        // Strictly ensure callers remain constant and active
-        const retainedCallers = await getCallers();
-        setCallers(retainedCallers);
-        if (retainedCallers.length > 0) {
-          setSelectedCallerId((prev) =>
-            retainedCallers.some((c) => c.id === prev) ? prev : retainedCallers[0].id
-          );
-        }
-        await logAudit({
-          userId: 'admin',
-          userName: 'Administrator',
-          userRole: 'admin',
-          action: 'EXCEL_DATA_ERASED',
-          entity: 'contacts',
-          metadata: {
-            callersPreserved,
-            message: 'Erase executed strictly for Excel data. Callers end kept constant.',
-          },
-        });
-        await loadData();
-      } catch (err) {
-        console.error('Error erasing Excel data:', err);
-      } finally {
-        setIsSyncing(false);
-      }
+  // Selective Erase execution handler
+  const handleExecuteSelectiveErase = async (options: SelectiveEraseOptions) => {
+    setIsSyncing(true);
+    try {
+      const result = await eraseSelectiveModelData(options);
+      
+      // Reload fresh database state
+      const freshContacts = await getContacts();
+      const freshAssignments = await getAssignments();
+      const retainedCallers = await getCallers();
+
+      setContacts(freshContacts);
+      setAssignments(freshAssignments);
+      setCallers(retainedCallers);
+
+      await logAudit({
+        userId: 'admin',
+        userName: 'Administrator',
+        userRole: 'admin',
+        action: 'SELECTIVE_DATA_ERASED',
+        entity: 'contacts',
+        metadata: {
+          contactsDeleted: result.contactsDeleted,
+          assignmentsDeleted: result.assignmentsDeleted,
+          logsDeleted: result.logsDeleted,
+          callersPreserved: result.callersPreserved,
+          options,
+        },
+      });
+      await loadData();
+    } catch (err: any) {
+      console.error('Error in selective erase:', err);
+      alert(`Selective erase error: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSyncing(false);
     }
+  };
+
+  // Erase specific Excel batch
+  const handleEraseSpecificExcel = async (sourceName: string) => {
+    setIsSyncing(true);
+    try {
+      const result = await eraseSpecificExcels([sourceName]);
+      const freshContacts = await getContacts();
+      const freshAssignments = await getAssignments();
+      const retainedCallers = await getCallers();
+
+      setContacts(freshContacts);
+      setAssignments(freshAssignments);
+      setCallers(retainedCallers);
+
+      await logAudit({
+        userId: 'admin',
+        userName: 'Administrator',
+        userRole: 'admin',
+        action: 'SPECIFIC_EXCEL_ERASED',
+        entity: 'contacts',
+        metadata: {
+          sourceName,
+          contactsDeleted: result.contactsDeleted,
+          callersPreserved: result.callersPreserved,
+        },
+      });
+      await loadData();
+    } catch (err: any) {
+      console.error('Error erasing specific Excel:', err);
+      alert(`Error erasing Excel: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Open selective erase dialog
+  const handleEmptyAllData = async () => {
+    setIsEraseModalOpen(true);
   };
 
   // Erase ONLY uploaded Excel contacts (Callers end is strictly kept constant)
   const handleClearExcelContacts = async () => {
-    if (
-      window.confirm(
-        'Erase all uploaded Excel contacts?\n\n✔ ONLY the Excel contacts list will be erased.\n✔ The callers end is completely safe, untouched, and kept constant.'
-      )
-    ) {
-      setIsSyncing(true);
-      try {
-        const { callersPreserved } = await eraseExcelDataOnly();
-        setContacts([]);
-        setAssignments([]);
-        const retainedCallers = await getCallers();
-        setCallers(retainedCallers);
-        await logAudit({
-          userId: 'admin',
-          userName: 'Administrator',
-          userRole: 'admin',
-          action: 'EXCEL_CONTACTS_PURGED',
-          entity: 'contacts',
-          metadata: { callersPreserved, message: 'Callers end kept constant' },
-        });
-        await loadData();
-      } catch (err) {
-        console.error('Error erasing Excel contacts:', err);
-      } finally {
-        setIsSyncing(false);
-      }
-    }
+    setIsEraseModalOpen(true);
   };
 
   // Equal full redistribution of contacts across callers
@@ -530,6 +535,8 @@ export default function App() {
               onImportContacts={handleImportContacts}
               onDeleteContact={handleDeleteContact}
               onClearAllContacts={handleClearExcelContacts}
+              onOpenEraseModal={() => setIsEraseModalOpen(true)}
+              onEraseSpecificExcel={handleEraseSpecificExcel}
               onRefresh={loadData}
             />
           )}
@@ -539,7 +546,6 @@ export default function App() {
               callers={callers}
               callingDate={callingDate}
               onSaveCaller={handleSaveCaller}
-              onDeleteCaller={handleDeleteCaller}
               onTriggerReassignment={handleTriggerReassignment}
               onSwitchToCaller={handleSwitchToCaller}
             />
@@ -628,6 +634,17 @@ export default function App() {
         isOpen={isAdminModalOpen}
         onClose={() => setIsAdminModalOpen(false)}
         onSuccess={handleAdminLoginSuccess}
+      />
+
+      {/* Selective Data Eraser & Excel Wipe Modal (Callers end strictly kept constant) */}
+      <EraseDataModal
+        isOpen={isEraseModalOpen}
+        onClose={() => setIsEraseModalOpen(false)}
+        contacts={contacts}
+        callers={callers}
+        assignments={assignments}
+        onExecuteErase={handleExecuteSelectiveErase}
+        isSyncing={isSyncing}
       />
     </div>
   );

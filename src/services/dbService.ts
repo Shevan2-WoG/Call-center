@@ -21,6 +21,8 @@ import {
   CallOutcome,
   DailyReportSummary,
   CALL_OUTCOMES,
+  ExcelUploadBatch,
+  SelectiveEraseOptions,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -97,14 +99,9 @@ export async function saveCaller(caller: Caller): Promise<void> {
 }
 
 export async function deleteCaller(callerId: string): Promise<void> {
-  const callers = getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []).filter(c => c.id !== callerId);
-  setLocal(STORAGE_KEYS.CALLERS, callers);
-
-  try {
-    await deleteDoc(doc(db, 'callers', callerId));
-  } catch (err) {
-    console.warn('Firestore delete caller error', err);
-  }
+  // CRITICAL USER DIRECTIVE: Callers can only be added/edited, but CANNOT be deleted.
+  console.warn(`Blocked deletion attempt for caller ${callerId}. Callers are permanent and cannot be deleted.`);
+  throw new Error('Callers are permanent and cannot be deleted from the system.');
 }
 
 // ------------------- CONTACTS -------------------
@@ -772,5 +769,236 @@ export async function clearAllDatabaseData(): Promise<void> {
  */
 export async function clearUploadedContacts(): Promise<void> {
   await eraseExcelDataOnly();
+}
+
+/**
+ * Groups all current contacts into Excel upload batches with metrics.
+ * Lays out each uploaded Excel spreadsheet (e.g. Excel 1, Excel 2, etc.)
+ */
+export function getExcelUploadBatches(contacts: Contact[], assignments: Assignment[] = []): ExcelUploadBatch[] {
+  const map = new Map<
+    string,
+    {
+      total: number;
+      assigned: number;
+      unassigned: number;
+      completed: number;
+      categories: Set<string>;
+      firstImportedAt?: string;
+    }
+  >();
+
+  for (const c of contacts) {
+    const rawSource = (c.source || '').trim();
+    const sourceKey = rawSource || 'Excel 1 (Initial Import)';
+    const existing = map.get(sourceKey) || {
+      total: 0,
+      assigned: 0,
+      unassigned: 0,
+      completed: 0,
+      categories: new Set<string>(),
+      firstImportedAt: c.createdAt,
+    };
+
+    existing.total += 1;
+    if (c.status === 'unassigned') existing.unassigned += 1;
+    else if (c.status === 'completed') existing.completed += 1;
+    else existing.assigned += 1;
+
+    if (c.category) existing.categories.add(c.category);
+    if (!existing.firstImportedAt || c.createdAt < existing.firstImportedAt) {
+      existing.firstImportedAt = c.createdAt;
+    }
+    map.set(sourceKey, existing);
+  }
+
+  // Convert to array and assign clean sequential identifiers (e.g. Excel 1, Excel 2, etc.)
+  let excelCounter = 1;
+  const result: ExcelUploadBatch[] = [];
+
+  for (const [sourceName, data] of map.entries()) {
+    const isManual = /manual/i.test(sourceName);
+    let displayName = sourceName;
+    if (isManual) {
+      displayName = 'Direct / Manual Entries';
+    } else if (sourceName.toLowerCase().startsWith('excel ')) {
+      displayName = sourceName;
+    } else {
+      displayName = `Excel ${excelCounter}: ${sourceName}`;
+      excelCounter++;
+    }
+
+    result.push({
+      id: `batch_${sourceName.replace(/[^a-zA-Z0-9]/g, '_')}`,
+      sourceName,
+      displayName,
+      totalContacts: data.total,
+      assignedCount: data.assigned,
+      unassignedCount: data.unassigned,
+      completedCount: data.completed,
+      categories: Array.from(data.categories),
+      firstImportedAt: data.firstImportedAt,
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Erases contacts and linked assignments belonging to specific Excel sources.
+ * Callers are 100% protected and remain constant and abiding.
+ */
+export async function eraseSpecificExcels(
+  excelSources: string[],
+  unassignedOnly = false
+): Promise<{ contactsDeleted: number; assignmentsDeleted: number; callersPreserved: number }> {
+  const allContacts = getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
+  const allAssignments = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
+  const callers = await getCallers();
+
+  const sourcesSet = new Set(excelSources.map((s) => s.trim().toLowerCase()));
+
+  // Identify contacts to delete
+  const contactsToDelete = allContacts.filter((c) => {
+    const src = (c.source || 'Excel 1 (Initial Import)').trim().toLowerCase();
+    const matchesSource = sourcesSet.has(src);
+    if (!matchesSource) return false;
+    if (unassignedOnly) {
+      return c.status === 'unassigned';
+    }
+    return true;
+  });
+
+  const deleteContactIds = new Set(contactsToDelete.map((c) => c.id));
+
+  // Identify assignments to delete
+  const assignmentsToDelete = allAssignments.filter((a) => deleteContactIds.has(a.contactId));
+  const deleteAssignmentIds = new Set(assignmentsToDelete.map((a) => a.id));
+
+  // Update local state
+  const remainingContacts = allContacts.filter((c) => !deleteContactIds.has(c.id));
+  const remainingAssignments = allAssignments.filter((a) => !deleteAssignmentIds.has(a.id));
+
+  setLocal(STORAGE_KEYS.CONTACTS, remainingContacts);
+  setLocal(STORAGE_KEYS.ASSIGNMENTS, remainingAssignments);
+  setLocal(STORAGE_KEYS.CALLERS, callers);
+
+  // Remove from Firestore in batches
+  try {
+    const contactChunks: string[][] = [];
+    const idList = Array.from(deleteContactIds);
+    for (let i = 0; i < idList.length; i += 400) {
+      contactChunks.push(idList.slice(i, i + 400));
+    }
+    for (const chunk of contactChunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((cid) => {
+        batch.delete(doc(db, 'contacts', cid));
+      });
+      await batch.commit();
+    }
+
+    const asgChunks: string[][] = [];
+    const asgIdList = Array.from(deleteAssignmentIds);
+    for (let i = 0; i < asgIdList.length; i += 400) {
+      asgChunks.push(asgIdList.slice(i, i + 400));
+    }
+    for (const chunk of asgChunks) {
+      const batch = writeBatch(db);
+      chunk.forEach((aid) => {
+        batch.delete(doc(db, 'assignments', aid));
+      });
+      await batch.commit();
+    }
+  } catch (err) {
+    console.warn('Firestore selective erase error:', err);
+  }
+
+  return {
+    contactsDeleted: deleteContactIds.size,
+    assignmentsDeleted: deleteAssignmentIds.size,
+    callersPreserved: callers.length,
+  };
+}
+
+/**
+ * Selective data eraser: granularly wipes user-chosen components.
+ * Callers are strictly protected and NEVER deleted.
+ */
+export async function eraseSelectiveModelData(
+  options: SelectiveEraseOptions
+): Promise<{ contactsDeleted: number; assignmentsDeleted: number; logsDeleted: number; callersPreserved: number }> {
+  const callers = await getCallers();
+  let contactsDeleted = 0;
+  let assignmentsDeleted = 0;
+  let logsDeleted = 0;
+
+  // 1. Erase specific Excels if provided
+  if (options.excelSources && options.excelSources.length > 0) {
+    const res = await eraseSpecificExcels(options.excelSources, options.unassignedOnly);
+    contactsDeleted += res.contactsDeleted;
+    assignmentsDeleted += res.assignmentsDeleted;
+  }
+
+  // 2. Clear Active Assignments only (if requested without deleting all contacts)
+  if (options.clearAssignments && (!options.excelSources || options.excelSources.length === 0)) {
+    const currentAssignments = getLocal<Assignment[]>(STORAGE_KEYS.ASSIGNMENTS, []);
+    assignmentsDeleted = currentAssignments.length;
+    setLocal(STORAGE_KEYS.ASSIGNMENTS, []);
+    setLocal(STORAGE_KEYS.TEAMS, []);
+
+    // Reset contact status to unassigned
+    const contacts = getLocal<Contact[]>(STORAGE_KEYS.CONTACTS, []);
+    const updatedContacts = contacts.map((c) => ({
+      ...c,
+      status: 'unassigned' as const,
+    }));
+    setLocal(STORAGE_KEYS.CONTACTS, updatedContacts);
+
+    try {
+      const snap = await getDocs(collection(db, 'assignments'));
+      if (!snap.empty) {
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const batch = writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+      for (let i = 0; i < updatedContacts.length; i += 400) {
+        const batch = writeBatch(db);
+        updatedContacts.slice(i, i + 400).forEach((c) => batch.set(doc(db, 'contacts', c.id), c, { merge: true }));
+        await batch.commit();
+      }
+    } catch (err) {
+      console.warn('Firestore clear assignments error:', err);
+    }
+  }
+
+  // 3. Clear Call Logs / Attempts if requested
+  if (options.clearCallLogs) {
+    const currentAttempts = getLocal<CallAttempt[]>(STORAGE_KEYS.CALL_ATTEMPTS, []);
+    logsDeleted = currentAttempts.length;
+    setLocal(STORAGE_KEYS.CALL_ATTEMPTS, []);
+
+    try {
+      const snap = await getDocs(collection(db, 'call_attempts'));
+      if (!snap.empty) {
+        for (let i = 0; i < snap.docs.length; i += 400) {
+          const batch = writeBatch(db);
+          snap.docs.slice(i, i + 400).forEach((d) => batch.delete(d.ref));
+          await batch.commit();
+        }
+      }
+    } catch (err) {
+      console.warn('Firestore clear call attempts error:', err);
+    }
+  }
+
+  return {
+    contactsDeleted,
+    assignmentsDeleted,
+    logsDeleted,
+    callersPreserved: callers.length,
+  };
 }
 

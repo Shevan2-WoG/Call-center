@@ -1,11 +1,12 @@
-import React, { useState, useRef } from 'react';
-import { Contact } from '../types';
+import React, { useState, useRef, useMemo } from 'react';
+import { Contact, ExcelUploadBatch } from '../types';
 import {
   parseContactExcel,
   downloadExcelTemplate,
   ParseExcelResult,
   normalizePhoneNumber,
 } from '../services/excelService';
+import { getExcelUploadBatches } from '../services/dbService';
 import {
   Upload,
   FileSpreadsheet,
@@ -23,6 +24,9 @@ import {
   UserPlus,
   Trash2,
   X,
+  ShieldCheck,
+  Lock,
+  Layers,
 } from 'lucide-react';
 
 interface ContactsViewProps {
@@ -30,6 +34,8 @@ interface ContactsViewProps {
   onImportContacts: (contacts: Omit<Contact, 'id' | 'createdAt' | 'status'>[]) => Promise<void>;
   onDeleteContact?: (contactId: string) => Promise<void>;
   onClearAllContacts?: () => Promise<void>;
+  onOpenEraseModal?: () => void;
+  onEraseSpecificExcel?: (sourceName: string) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -38,11 +44,19 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   onImportContacts,
   onDeleteContact,
   onClearAllContacts,
+  onOpenEraseModal,
+  onEraseSpecificExcel,
   onRefresh,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterSource, setFilterSource] = useState('all');
+
+  // Compute Excel batches
+  const excelBatches = useMemo(() => {
+    return getExcelUploadBatches(contacts);
+  }, [contacts]);
 
   // Manual single contact modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -151,8 +165,27 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = filterCategory === 'all' || c.category === filterCategory;
     const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
-    return matchesSearch && matchesCategory && matchesStatus;
+    const matchesSource =
+      filterSource === 'all' ||
+      (c.source || 'Excel 1 (Initial Import)').trim().toLowerCase() === filterSource.trim().toLowerCase();
+    return matchesSearch && matchesCategory && matchesStatus && matchesSource;
   });
+
+  const handleEraseBatch = async (sourceName: string, displayName: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to erase "${displayName}"?\n\n✔ Only contacts from this specific Excel spreadsheet will be removed.\n✔ Callers cannot and will not be deleted; all callers remain 100% constant.`
+      )
+    ) {
+      return;
+    }
+
+    if (onEraseSpecificExcel) {
+      await onEraseSpecificExcel(sourceName);
+    } else if (onOpenEraseModal) {
+      onOpenEraseModal();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -169,7 +202,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+            {onOpenEraseModal && (
+              <button
+                type="button"
+                onClick={onOpenEraseModal}
+                className="px-3.5 py-2 rounded-xl bg-[#fff1f2] hover:bg-[#ffe4e6] text-[#ff2a85] border border-[#fecdd3] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                title="Selectively erase specific uploaded Excels or clear components"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-[#ff2a85]" />
+                <span>Selective Erase</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -424,11 +468,106 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* Lay out the Excels: Uploaded Spreadsheets Roster */}
+          {excelBatches.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-[#e2d0fa] space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h3 className="text-xs font-black text-[#1e1b4b] uppercase tracking-wider flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4 text-[#6c28f5]" />
+                    <span>Uploaded Excel Spreadsheets in Database ({excelBatches.length})</span>
+                  </h3>
+                  <p className="text-[11px] text-[#7c7896] font-medium mt-0.5">
+                    Individual Excel files detected in your database. You can filter the table or selectively erase any single Excel below.
+                  </p>
+                </div>
+
+                {onOpenEraseModal && (
+                  <button
+                    type="button"
+                    onClick={onOpenEraseModal}
+                    className="text-xs font-bold text-[#ff2a85] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Advanced Erase Options</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {excelBatches.map((batch) => (
+                  <div
+                    key={batch.id}
+                    className="p-4 rounded-2xl border border-[#e2d0fa] bg-white hover:border-[#cbaff8] transition-all flex flex-col justify-between gap-3 shadow-xs"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-black text-xs text-[#1e1b4b] block truncate" title={batch.displayName}>
+                            {batch.displayName}
+                          </span>
+                          <span className="text-[10px] text-[#7c7896] font-mono block truncate">
+                            {batch.sourceName}
+                          </span>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa] shrink-0">
+                          {batch.totalContacts} contacts
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 text-[11px] text-[#7c7896] flex-wrap">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#ffb800]" />
+                          Unassigned: <strong className="text-[#1e1b4b]">{batch.unassignedCount}</strong>
+                        </span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#6c28f5]" />
+                          Assigned: <strong className="text-[#1e1b4b]">{batch.assignedCount}</strong>
+                        </span>
+                        <span>•</span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#88d600]" />
+                          Done: <strong className="text-[#1e1b4b]">{batch.completedCount}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2.5 border-t border-[#f3e8fd] flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterSource(batch.sourceName);
+                          const tableElem = document.getElementById('contacts-database-table');
+                          if (tableElem) tableElem.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className="text-[11px] font-bold text-[#6c28f5] hover:underline cursor-pointer flex items-center gap-1"
+                      >
+                        <Filter className="w-3 h-3" />
+                        <span>Filter Table</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleEraseBatch(batch.sourceName, batch.displayName)}
+                        className="px-2.5 py-1 text-[11px] font-bold text-[#ff2a85] hover:bg-[#fff1f2] border border-[#fecdd3] rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                        title={`Erase only contacts from ${batch.displayName}`}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        <span>Erase This Excel</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Existing Contacts Database Table */}
-      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+      <div id="contacts-database-table" className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
         {/* Table Controls */}
         <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -469,6 +608,26 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               </select>
             </div>
 
+            {/* Excel Source Filter */}
+            {excelBatches.length > 0 && (
+              <div className="flex items-center gap-1 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2 py-1.5 text-xs">
+                <FileSpreadsheet className="w-3 h-3 text-[#6c28f5]" />
+                <select
+                  value={filterSource}
+                  onChange={(e) => setFilterSource(e.target.value)}
+                  aria-label="Filter by Excel Spreadsheet"
+                  className="bg-transparent outline-none cursor-pointer text-[#1e1b4b] font-semibold max-w-[150px] truncate"
+                >
+                  <option value="all">All Excels ({excelBatches.length})</option>
+                  {excelBatches.map((batch) => (
+                    <option key={batch.id} value={batch.sourceName}>
+                      {batch.displayName} ({batch.totalContacts})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Status Filter */}
             <select
               value={filterStatus}
@@ -491,15 +650,15 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
               <RefreshCw className="w-4 h-4" />
             </button>
 
-            {onClearAllContacts && contacts.length > 0 && (
+            {(onOpenEraseModal || onClearAllContacts) && contacts.length > 0 && (
               <button
                 type="button"
-                onClick={onClearAllContacts}
-                title="Erase all uploaded Excel contacts (The callers end is strictly kept constant)"
+                onClick={onOpenEraseModal || onClearAllContacts}
+                title="Selectively erase uploaded Excels or clear data. Callers are permanent and protected."
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-300/60 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                <span>Erase Excel Contacts</span>
+                <span>Selective Erase / Wipe</span>
               </button>
             )}
           </div>
