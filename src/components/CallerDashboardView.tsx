@@ -370,6 +370,26 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
       {/* ==================== SUB-VIEW 1: CALL QUEUE ==================== */}
       {subTab === 'queue' && (
         <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+          {/* Scriptural Start Message for Caller Assignment Layout: Hebrews 6:10 AMPC */}
+          <div className="m-4 p-4 bg-gradient-to-r from-[#fbf7fe] via-[#f5eaff] to-[#fbf7fe] border border-[#cbaff8] rounded-2xl shadow-2xs">
+            <div className="flex items-start gap-3">
+              <span className="text-xl shrink-0 mt-0.5" role="img" aria-label="dove">🕊️</span>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#6c28f5] bg-white px-2 py-0.5 rounded-full border border-[#cbaff8]">
+                    Hebrews 6:10 AMPC
+                  </span>
+                  <span className="text-xs font-bold text-[#1e1b4b]">
+                    Hebrew 6:10 says... Your effort and availability is not in vain
+                  </span>
+                </div>
+                <p className="text-xs text-[#1e1b4b] font-medium italic leading-relaxed bg-white/60 p-2.5 rounded-xl border border-[#e2d0fa]">
+                  &ldquo;[10] For God is not unrighteous to forget or overlook your labor and the love which you have shown for His name&apos;s sake in ministering to the needs of the saints (His own consecrated people), as you still do.&rdquo;
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Filter and Search Bar */}
           <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-1.5 overflow-x-auto">

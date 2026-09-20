@@ -503,6 +503,36 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
         </div>
       </section>
 
+      {/* Scriptural Start Message for Assignment Layout: Hebrews 6:10 AMPC */}
+      <section
+        id="assignment-layout-start-message"
+        aria-label="Assignment Start Message - Hebrews 6:10 AMPC"
+        className="bg-gradient-to-r from-[#fbf7fe] via-[#f5eaff] to-[#fbf7fe] border-2 border-[#cbaff8] rounded-3xl p-5 sm:p-6 shadow-sm relative overflow-hidden"
+      >
+        <div className="flex flex-col sm:flex-row items-start gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#6c28f5] text-white flex items-center justify-center shrink-0 shadow-md shadow-purple-600/20">
+            <span className="text-2xl" role="img" aria-label="dove">🕊️</span>
+          </div>
+          <div className="space-y-2 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-black uppercase tracking-wider text-[#6c28f5] bg-white px-3 py-1 rounded-full border border-[#cbaff8] shadow-2xs">
+                Hebrews 6:10 AMPC
+              </span>
+              <span className="text-xs sm:text-sm font-black text-[#1e1b4b]">
+                Hebrew 6:10 says... Your effort and availability is not in vain
+              </span>
+            </div>
+            <p className="text-xs sm:text-sm font-semibold text-[#1e1b4b] leading-relaxed italic bg-white/70 p-3 rounded-xl border border-[#e2d0fa]">
+              &ldquo;[10] For God is not unrighteous to forget or overlook your labor and the love which you have shown for His name&apos;s sake in ministering to the needs of the saints (His own consecrated people), as you still do.&rdquo;
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-[#7c7896] font-medium pt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#6c28f5]" />
+              <span>Starting message for all contact assignment layouts, WhatsApp dispatches, and caller rosters</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Distribution Action Section */}
       <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
         <div className="p-5 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -740,7 +770,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                 WhatsApp Assignment Dispatch Hub
               </h2>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                Send callers their daily assignments directly to WhatsApp or copy formatted rosters.
+                Send callers their daily assignments directly to WhatsApp or copy formatted rosters. Opens with Hebrews 6:10 AMPC blessing.
               </p>
             </div>
             <span className="text-xs bg-[#f3efff] text-[#6c28f5] px-3 py-1 rounded-full font-bold border border-[#e8e1f9] flex items-center gap-1.5">

@@ -103,11 +103,22 @@ export function calculateDistribution(
  * - Contact numbers
  * - Relevant notes
  */
+/**
+ * Scriptural Start Message requested for assignment layout (Hebrews 6:10 AMPC)
+ */
+export const HEBREWS_6_10_START_MESSAGE =
+  `🕊️ *Hebrew 6:10 says... Your effort and availability is not in vain*\n` +
+  `*Hebrews 6:10 AMPC*\n` +
+  `_[10] For God is not unrighteous to forget or overlook your labor and the love which you have shown for His name's sake in ministering to the needs of the saints (His own consecrated people), as you still do._\n\n` +
+  `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
 export function formatWhatsAppAssignmentMessage(
   callerName: string,
   callingDate: string,
   assignedContacts: { name: string; phone: string; location?: string; category?: string; notes?: string }[]
 ): string {
+  const startMessage = HEBREWS_6_10_START_MESSAGE;
+
   const header = `📞 *KIU MANIFEST CALL CENTER ASSIGNMENTS*\n` +
     `📅 Date: ${callingDate}\n` +
     `👤 Caller: ${callerName}\n` +
@@ -134,7 +145,7 @@ export function formatWhatsAppAssignmentMessage(
     `🏢 Operations Owner: Muhindo • Platform: Arnible\n` +
     `Good luck with today's calls!`;
 
-  return header + body + footer;
+  return startMessage + header + body + footer;
 }
 
 /**
