@@ -20,6 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Caller } from '../types';
+import { isToday, formatFriendlyDate, getTodayDateString } from '../utils/dateUtils';
 
 interface NavbarProps {
   activeView: 'home' | 'caller' | 'admin';
@@ -39,6 +40,8 @@ interface NavbarProps {
   onEmptyData: () => void;
   isSyncing: boolean;
   isAdminAuthenticated: boolean;
+  isAutoRenewEnabled?: boolean;
+  onResetToToday?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -59,6 +62,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onEmptyData,
   isSyncing,
   isAdminAuthenticated,
+  isAutoRenewEnabled = true,
+  onResetToToday,
 }) => {
   // Admin tabs list (only visible when in Admin mode)
   const adminTabs = [
@@ -119,17 +124,38 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Calling Date Picker */}
-            <div className="hidden sm:flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-2.5 py-1.5 text-xs text-purple-100">
-              <Calendar className="w-3.5 h-3.5 text-purple-300" />
+            {/* Calling Date Picker & Daily Auto-Renew Status */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-xl px-2.5 py-1 text-xs text-purple-100">
+              <Calendar className="w-3.5 h-3.5 text-purple-300 shrink-0" />
               <span className="font-bold text-purple-200 hidden md:inline">Date:</span>
               <input
                 type="date"
                 value={callingDate}
                 onChange={(e) => setCallingDate(e.target.value)}
                 className="bg-transparent font-bold text-white outline-none cursor-pointer"
-                title="Calling Date"
+                title={`Calling Date: ${formatFriendlyDate(callingDate, 'long')}`}
               />
+              {isToday(callingDate) ? (
+                <span
+                  className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#88d600]/20 text-[#88d600] border border-[#88d600]/40 flex items-center gap-1 shrink-0 select-none"
+                  title="Date auto-renews automatically every single day"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#88d600] animate-pulse" />
+                  <span>Today (Auto)</span>
+                </span>
+              ) : (
+                onResetToToday && (
+                  <button
+                    type="button"
+                    onClick={onResetToToday}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#88d600] hover:bg-[#99ee00] text-[#1e1b4b] flex items-center gap-1 shrink-0 transition-colors cursor-pointer shadow-xs"
+                    title={`Snap back to today's auto-renewing date (${formatFriendlyDate(getTodayDateString(), 'short')})`}
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" />
+                    <span>Today</span>
+                  </button>
+                )
+              )}
             </div>
 
             {/* CALLER PORTAL BUTTON: Open & readily accessible for all users */}

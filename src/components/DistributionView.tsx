@@ -11,6 +11,7 @@ import {
   generateWhatsAppUrl,
   DistributionResult,
 } from '../services/distributionEngine';
+import { formatFriendlyDate, isToday } from '../utils/dateUtils';
 import {
   Share2,
   Users,
@@ -225,8 +226,13 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             </h2>
           </div>
           <div className="flex items-center gap-2 text-[11px] font-bold">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa]">
-              Active Date: {callingDate}
+            <span className="px-2.5 py-0.5 rounded-full bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa] flex items-center gap-1.5">
+              <span>Active Date: {formatFriendlyDate(callingDate, 'medium')}</span>
+              {isToday(callingDate) && (
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] font-extrabold bg-[#88d600]/20 text-[#4c7a00]">
+                  Auto-Renewed Today
+                </span>
+              )}
             </span>
             <span className="px-2.5 py-0.5 rounded-full bg-[#88d600]/15 text-[#558800] border border-[#88d600]/30 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-[#88d600] animate-pulse" />
@@ -737,8 +743,13 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                 Send callers their daily assignments directly to WhatsApp or copy formatted rosters.
               </p>
             </div>
-            <span className="text-xs bg-[#f3efff] text-[#6c28f5] px-3 py-1 rounded-full font-bold border border-[#e8e1f9]">
-              Date: {callingDate}
+            <span className="text-xs bg-[#f3efff] text-[#6c28f5] px-3 py-1 rounded-full font-bold border border-[#e8e1f9] flex items-center gap-1.5">
+              <span>Date: {formatFriendlyDate(callingDate, 'short')}</span>
+              {isToday(callingDate) && (
+                <span className="text-[10px] bg-[#88d600]/20 text-[#4c7a00] px-1.5 py-0.2 rounded-md font-extrabold">
+                  Today
+                </span>
+              )}
             </span>
           </div>
         </div>

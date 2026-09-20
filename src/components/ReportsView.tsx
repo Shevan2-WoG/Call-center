@@ -1,5 +1,6 @@
 import React from 'react';
 import { Assignment, CallAttempt, Caller, DailyReportSummary, CALL_OUTCOMES } from '../types';
+import { formatFriendlyDate, isToday } from '../utils/dateUtils';
 import { buildDailyReportSummary } from '../services/dbService';
 import { exportDaily12SheetReport } from '../services/excelService';
 import {
@@ -54,8 +55,13 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 <h2 className="text-lg font-black text-[#1e1b4b]">
                   KIU Manifest Daily Call Center Report
                 </h2>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9]">
-                  {callingDate}
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e8e1f9] flex items-center gap-1.5">
+                  <span>{formatFriendlyDate(callingDate, 'medium')}</span>
+                  {isToday(callingDate) && (
+                    <span className="text-[10px] bg-[#88d600]/20 text-[#4c7a00] px-1.5 py-0.2 rounded-md font-extrabold">
+                      Today (Auto)
+                    </span>
+                  )}
                 </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium">

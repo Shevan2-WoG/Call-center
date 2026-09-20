@@ -15,6 +15,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Caller, Assignment, CallAttempt } from '../types';
+import { formatFriendlyDate, isToday } from '../utils/dateUtils';
 
 interface HomeViewProps {
   onEnterCallerPortal: (callerId?: string) => void;
@@ -76,10 +77,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
             Centralized contact distribution, live dialing workspace, WhatsApp dispatch, and instant call feedback tracking.
           </p>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-purple-300">
-            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/15">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-purple-300">
+            <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-full border border-white/15">
               <Calendar className="w-3.5 h-3.5 text-[#88d600]" />
-              Active Date: <strong className="text-white">{callingDate}</strong>
+              <span>Active Date:</span>
+              <strong className="text-white">{formatFriendlyDate(callingDate, 'long')}</strong>
+              {isToday(callingDate) && (
+                <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-[#88d600] text-[#1e1b4b] uppercase tracking-wider">
+                  Auto-Renewed Daily
+                </span>
+              )}
             </span>
             <span className="inline-flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full border border-white/15">
               <Users className="w-3.5 h-3.5 text-purple-300" />

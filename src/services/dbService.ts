@@ -24,6 +24,7 @@ import {
   ExcelUploadBatch,
   SelectiveEraseOptions,
 } from '../types';
+import { getTodayDateString } from '../utils/dateUtils';
 
 const STORAGE_KEYS = {
   USERS: 'cc_users',
@@ -509,7 +510,7 @@ export function buildDailyReportSummary(
 }
 
 // ------------------- INITIAL SEED DATA -------------------
-export async function seedInitialDataIfEmpty(currentCallingDate = '2026-09-09', force = false): Promise<void> {
+export async function seedInitialDataIfEmpty(currentCallingDate = getTodayDateString(), force = false): Promise<void> {
   // Respect user intent: only seed if explicitly forced by the user
   if (!force) {
     return;

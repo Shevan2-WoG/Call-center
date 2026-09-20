@@ -34,6 +34,12 @@ import {
   clearUploadedContacts,
   clearDailyAssignments,
 } from './services/dbService';
+import {
+  getTodayDateString,
+  isToday,
+  getMsUntilNextMidnight,
+  formatFriendlyDate,
+} from './utils/dateUtils';
 import { Navbar } from './components/Navbar';
 import { DistributionView } from './components/DistributionView';
 import { ContactsView } from './components/ContactsView';
@@ -60,8 +66,81 @@ export default function App() {
 
   const [adminTab, setAdminTab] = useState<string>('dashboard');
   const [callerSubTab, setCallerSubTab] = useState<'queue' | 'performance' | 'history'>('queue');
-  const [callingDate, setCallingDate] = useState('2026-09-09');
+  const [callingDate, setCallingDate] = useState<string>(getTodayDateString);
+  const [isAutoRenewEnabled, setIsAutoRenewEnabled] = useState<boolean>(true);
+  const [dateNotice, setDateNotice] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Daily auto-renewal: Automatically updates the calling date at midnight or on day change
+  useEffect(() => {
+    const checkDailyRollover = () => {
+      const today = getTodayDateString();
+      if (isAutoRenewEnabled) {
+        setCallingDate((prevDate) => {
+          if (prevDate !== today) {
+            setDateNotice(`Date auto-renewed: Active campaign date updated to ${formatFriendlyDate(today, 'long')}`);
+            setTimeout(() => setDateNotice(null), 8000);
+            return today;
+          }
+          return prevDate;
+        });
+      }
+    };
+
+    // Run check on initial load
+    checkDailyRollover();
+
+    // Schedule exact midnight timer
+    let midnightTimer: NodeJS.Timeout | null = null;
+    const scheduleMidnight = () => {
+      const ms = getMsUntilNextMidnight();
+      midnightTimer = setTimeout(() => {
+        checkDailyRollover();
+        scheduleMidnight();
+      }, ms);
+    };
+    scheduleMidnight();
+
+    // Regular interval every 30 seconds (covers machine wake-from-sleep or clock adjustments)
+    const intervalId = setInterval(checkDailyRollover, 30000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkDailyRollover();
+      }
+    };
+
+    window.addEventListener('focus', checkDailyRollover);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (midnightTimer) clearTimeout(midnightTimer);
+      clearInterval(intervalId);
+      window.removeEventListener('focus', checkDailyRollover);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [isAutoRenewEnabled]);
+
+  const handleDateChange = (newDate: string) => {
+    setCallingDate(newDate);
+    const matchesToday = isToday(newDate);
+    setIsAutoRenewEnabled(matchesToday);
+    if (!matchesToday) {
+      setDateNotice(`Viewing historical/custom date: ${formatFriendlyDate(newDate, 'short')}. Click 'Today' anytime to resume auto-renewal.`);
+      setTimeout(() => setDateNotice(null), 6000);
+    } else {
+      setDateNotice(`Active on today (${formatFriendlyDate(newDate, 'short')}) with auto-renewal enabled.`);
+      setTimeout(() => setDateNotice(null), 4000);
+    }
+  };
+
+  const handleResetToToday = () => {
+    const today = getTodayDateString();
+    setCallingDate(today);
+    setIsAutoRenewEnabled(true);
+    setDateNotice(`Active campaign date synchronized to today (${formatFriendlyDate(today, 'short')}) with auto-renew active`);
+    setTimeout(() => setDateNotice(null), 5000);
+  };
 
   // Entities state
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -453,7 +532,9 @@ export default function App() {
         callerSubTab={callerSubTab}
         setCallerSubTab={setCallerSubTab}
         callingDate={callingDate}
-        setCallingDate={setCallingDate}
+        setCallingDate={handleDateChange}
+        isAutoRenewEnabled={isAutoRenewEnabled}
+        onResetToToday={handleResetToToday}
         selectedCallerId={selectedCallerId}
         setSelectedCallerId={setSelectedCallerId}
         callers={callers}
@@ -463,6 +544,25 @@ export default function App() {
         onEmptyData={handleEmptyAllData}
         isSyncing={isSyncing}
       />
+
+      {/* Auto-renew date announcement pill */}
+      {dateNotice && (
+        <div className="w-full bg-[#88d600] text-[#1e1b4b] px-4 py-2 text-xs font-black flex items-center justify-between shadow-sm z-30 transition-all">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#1e1b4b] animate-ping" />
+              <span>{dateNotice}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setDateNotice(null)}
+              className="text-[#1e1b4b] font-bold hover:underline cursor-pointer text-xs ml-4"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ==================== HOMEPAGE VIEW ==================== */}
       {activeView === 'home' && (

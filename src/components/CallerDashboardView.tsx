@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Assignment, CallAttempt, Caller, AvailabilityStatus, CallOutcome } from '../types';
+import { formatFriendlyDate, isToday } from '../utils/dateUtils';
 import { CallFeedbackModal } from './CallFeedbackModal';
 import { ContactHistoryModal } from './ContactHistoryModal';
 import {
@@ -179,8 +180,15 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                   KIU Manifest Agent Workspace
                 </span>
               </div>
-              <p className="text-xs text-[#7c7896] mt-0.5 font-medium">
-                Calling Date: <strong className="text-[#1e1b4b]">{callingDate}</strong> • WhatsApp:{' '}
+              <p className="text-xs text-[#7c7896] mt-0.5 font-medium flex flex-wrap items-center gap-1.5">
+                <span>Calling Date:</span>
+                <strong className="text-[#1e1b4b]">{formatFriendlyDate(callingDate, 'medium')}</strong>
+                {isToday(callingDate) && (
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] font-extrabold bg-[#88d600]/20 text-[#4c7a00]">
+                    Today (Auto)
+                  </span>
+                )}
+                <span>• WhatsApp:</span>
                 <strong className="text-[#6c28f5] font-mono">{currentCaller.whatsappNumber}</strong>
               </p>
             </div>
@@ -677,7 +685,9 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               <History className="w-4 h-4 text-[#6c28f5]" />
               Call Attempt History for {currentCaller.name} ({myAttempts.length})
             </h3>
-            <span className="text-xs font-bold text-[#7c7896]">Date: {callingDate}</span>
+            <span className="text-xs font-bold text-[#7c7896]">
+              Date: {formatFriendlyDate(callingDate, 'short')} {isToday(callingDate) ? '(Today)' : ''}
+            </span>
           </div>
 
           {myAttempts.length === 0 ? (

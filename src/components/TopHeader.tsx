@@ -11,8 +11,11 @@ import {
   Shield,
   Menu,
   X,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import { UserRole } from '../types';
+import { isToday, formatFriendlyDate, getTodayDateString } from '../utils/dateUtils';
 
 interface TopHeaderProps {
   currentRole: UserRole;
@@ -28,6 +31,8 @@ interface TopHeaderProps {
   setMobileMenuOpen: (open: boolean) => void;
   searchTerm?: string;
   setSearchTerm?: (term: string) => void;
+  isAutoRenewEnabled?: boolean;
+  onResetToToday?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -44,6 +49,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   setMobileMenuOpen,
   searchTerm = '',
   setSearchTerm,
+  isAutoRenewEnabled = true,
+  onResetToToday,
 }) => {
   const selectedCaller = callers.find((c) => c.id === selectedCallerId);
 
@@ -96,16 +103,37 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
       {/* Right Controls: Exactly matching the 3 square action buttons + Profile in PNG */}
       <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap self-end md:self-auto">
-        {/* Calling Date Selector */}
-        <div className="flex items-center gap-1.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2.5 py-1.5 text-xs text-[#1e1b4b]">
-          <Calendar className="w-3.5 h-3.5 text-[#6c28f5]" />
+        {/* Calling Date Selector & Daily Auto-Renew Indicator */}
+        <div className="flex items-center gap-1.5 bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl px-2.5 py-1 text-xs text-[#1e1b4b]">
+          <Calendar className="w-3.5 h-3.5 text-[#6c28f5] shrink-0" />
           <input
             type="date"
             value={callingDate}
             onChange={(e) => setCallingDate(e.target.value)}
             className="bg-transparent font-bold text-[#1e1b4b] outline-none cursor-pointer text-xs"
-            title="Campaign Calling Date"
+            title={`Campaign Calling Date: ${formatFriendlyDate(callingDate, 'long')}`}
           />
+          {isToday(callingDate) ? (
+            <span
+              className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#88d600]/20 text-[#436f00] flex items-center gap-1 shrink-0 select-none"
+              title="Date auto-renews automatically on a daily basis"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#88d600] animate-pulse" />
+              <span>Today (Auto)</span>
+            </span>
+          ) : (
+            onResetToToday && (
+              <button
+                type="button"
+                onClick={onResetToToday}
+                className="px-2 py-0.5 rounded-md text-[10px] font-black bg-[#6c28f5] hover:bg-[#5816d6] text-white flex items-center gap-1 shrink-0 transition-colors cursor-pointer shadow-xs"
+                title={`Return to Today's auto-renewing date (${formatFriendlyDate(getTodayDateString(), 'short')})`}
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                <span>Today</span>
+              </button>
+            )
+          )}
         </div>
 
         {/* Role Switcher */}

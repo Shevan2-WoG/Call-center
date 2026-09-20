@@ -13,6 +13,7 @@ import {
   Flame,
   FileSpreadsheet,
 } from 'lucide-react';
+import { formatFriendlyDate, isToday } from '../utils/dateUtils';
 
 interface HeroWidgetsRowProps {
   unassignedCount: number;
@@ -139,9 +140,18 @@ export const HeroWidgetsRow: React.FC<HeroWidgetsRowProps> = ({
                 Change
               </button>
             </div>
-            <div className="flex items-center gap-1.5 font-bold text-[#1e1b4b]">
+            <div className="flex flex-wrap items-center gap-1.5 font-bold text-[#1e1b4b]">
               <Calendar className="w-3.5 h-3.5 text-[#6c28f5]" />
-              <span>Date: {callingDate} • Active Shift</span>
+              <span>{formatFriendlyDate(callingDate, 'medium')}</span>
+              {isToday(callingDate) ? (
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-[#88d600]/20 text-[#4c7a00] font-black">
+                  Auto-Renewed Today
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-[#6c28f5]/15 text-[#6c28f5] font-bold">
+                  Historical Date
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#e2d0fa]">
               <button
