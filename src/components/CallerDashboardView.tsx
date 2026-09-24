@@ -1,27 +1,18 @@
 import React, { useState } from 'react';
 import { Assignment, CallAttempt, Caller, AvailabilityStatus, CallOutcome } from '../types';
 import { formatFriendlyDate, isToday } from '../utils/dateUtils';
-import { CallFeedbackModal } from './CallFeedbackModal';
-import { ContactHistoryModal } from './ContactHistoryModal';
 import {
   Headset,
   PhoneCall,
   MessageSquare,
   CheckCircle2,
-  Clock,
   Search,
   RotateCcw,
-  Calendar,
-  History,
-  AlertCircle,
-  Tag,
   MapPin,
-  Target,
-  BarChart3,
-  ListTodo,
-  TrendingUp,
-  UserCheck,
+  Tag,
+  Check,
   Zap,
+  AlertCircle,
 } from 'lucide-react';
 
 interface CallerDashboardViewProps {
@@ -33,8 +24,6 @@ interface CallerDashboardViewProps {
   allCallers: Caller[];
   onSwitchCaller?: (callerId: string) => void;
   onSaveCaller?: (caller: Caller) => Promise<void>;
-  activeSubTab?: 'queue' | 'performance' | 'history';
-  onSubTabChange?: (tab: 'queue' | 'performance' | 'history') => void;
 }
 
 export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
@@ -46,21 +35,12 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
   allCallers,
   onSwitchCaller,
   onSaveCaller,
-  activeSubTab: externalSubTab,
-  onSubTabChange,
 }) => {
-  const [internalSubTab, setInternalSubTab] = useState<'queue' | 'performance' | 'history'>('queue');
-  const subTab = externalSubTab || internalSubTab;
-  const setSubTab = (tab: 'queue' | 'performance' | 'history') => {
-    if (onSubTabChange) onSubTabChange(tab);
-    setInternalSubTab(tab);
-  };
-
-  const [filterTab, setFilterTab] = useState<'all' | 'pending' | 'completed' | 'followup'>('pending');
+  const [filterTab, setFilterTab] = useState<'all' | 'pending' | 'completed'>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeFeedbackAssignment, setActiveFeedbackAssignment] = useState<Assignment | null>(null);
-  const [historyContact, setHistoryContact] = useState<{ id: string; name: string } | null>(null);
-  const [quickActionLoadingId, setQuickActionLoadingId] = useState<string | null>(null);
+  const [savingFeedbackKey, setSavingFeedbackKey] = useState<string | null>(null);
+  const [justSavedId, setJustSavedId] = useState<string | null>(null);
+  const [notesDrafts, setNotesDrafts] = useState<Record<string, string>>({});
   const [statusUpdating, setStatusUpdating] = useState(false);
 
   if (!currentCaller) {
@@ -71,7 +51,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
         </div>
         <h3 className="text-base font-black text-[#1e1b4b] mb-1">No Active Caller Available</h3>
         <p className="text-xs text-[#7c7896] font-medium leading-relaxed">
-          There are no callers registered in the system yet. Add callers in the Admin Portal. Callers abide permanently and remain constant across all dates.
+          There are no callers registered in the system yet. Add callers in the Admin Portal.
         </p>
       </div>
     );
@@ -79,7 +59,9 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
 
   // Filter assignments for this caller on this date
   const myAssignments = assignments.filter(
-    (a) => (a.callerId === currentCaller.id || a.currentCallerId === currentCaller.id) && a.callingDate === callingDate
+    (a) =>
+      (a.callerId === currentCaller.id || a.currentCallerId === currentCaller.id) &&
+      a.callingDate === callingDate
   );
 
   const totalAssigned = myAssignments.length;
@@ -87,25 +69,6 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
   const pendingList = myAssignments.filter((a) => a.status !== 'Completed');
   const completedCount = completedList.length;
   const pendingCount = pendingList.length;
-  const progressPercent = totalAssigned > 0 ? Math.round((completedCount / totalAssigned) * 100) : 0;
-
-  // Follow-up count
-  const followUpAssignments = myAssignments.filter(
-    (a) => a.lastOutcome === 'Follow-up Required' || a.lastOutcome === 'Recall'
-  );
-  const followUpCount = followUpAssignments.length;
-
-  // Caller's call attempts made today
-  const myAttempts = attempts.filter((att) => att.callerId === currentCaller.id);
-
-  // Outcome statistics for this caller today
-  const outcomeCounts: Record<string, number> = {};
-  myAttempts.forEach((att) => {
-    outcomeCounts[att.outcome] = (outcomeCounts[att.outcome] || 0) + 1;
-  });
-
-  const targetCalls = currentCaller.targetCalls || 30;
-  const targetPercent = Math.min(100, Math.round((completedCount / targetCalls) * 100));
 
   const filteredAssignments = myAssignments.filter((a) => {
     const matchesSearch =
@@ -118,7 +81,6 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
 
     if (filterTab === 'pending') return a.status !== 'Completed';
     if (filterTab === 'completed') return a.status === 'Completed';
-    if (filterTab === 'followup') return a.lastOutcome === 'Follow-up Required' || a.lastOutcome === 'Recall';
     return true;
   });
 
@@ -136,26 +98,48 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
     }
   };
 
-  // Quick 1-click outcome logger
-  const handleQuickOutcome = async (asg: Assignment, outcome: CallOutcome) => {
-    setQuickActionLoadingId(asg.id + outcome);
+  // 1-Click Box Feedback Selector
+  const handleSelectFeedback = async (asg: Assignment, outcome: CallOutcome) => {
+    const key = `${asg.id}-${outcome}`;
+    setSavingFeedbackKey(key);
     try {
+      const draftNote = notesDrafts[asg.id] || asg.contactNotes || '';
       await onSaveAttempt({
         contactId: asg.contactId,
         callerId: currentCaller.id,
         callerName: currentCaller.name,
         assignmentId: asg.id,
         outcome,
-        comment: `Quick logged as ${outcome}`,
+        comment: draftNote ? `${outcome}: ${draftNote}` : outcome,
       });
+      setJustSavedId(asg.id);
+      setTimeout(() => setJustSavedId(null), 2500);
+    } catch (err) {
+      console.error('Failed to record feedback:', err);
     } finally {
-      setQuickActionLoadingId(null);
+      setSavingFeedbackKey(null);
     }
   };
 
+  // Feedback outcomes matching user specifications:
+  // Availability boxes + Column 1 boxes with confirmed, unconfirmed, needs follow-up, be reminded, etc.
+  const availabilityOptions: { label: string; outcome: CallOutcome; color: string }[] = [
+    { label: 'Available', outcome: 'Available', color: 'emerald' },
+    { label: 'Unavailable', outcome: 'Unavailable', color: 'rose' },
+  ];
+
+  const primaryFeedbackBoxes: { label: string; outcome: CallOutcome; color: string }[] = [
+    { label: 'Confirmed', outcome: 'Confirmed', color: 'emerald' },
+    { label: 'Unconfirmed', outcome: 'Unconfirmed', color: 'amber' },
+    { label: 'Needs Follow-up', outcome: 'Needs Follow-up', color: 'purple' },
+    { label: 'Be Reminded', outcome: 'Be Reminded', color: 'blue' },
+    { label: 'Recall / Busy', outcome: 'Busy', color: 'slate' },
+    { label: 'Wrong Number', outcome: 'Wrong Number', color: 'pink' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Caller Portal Top Card: Profile, Shift Status & Sub-Navigation */}
+      {/* Caller Portal Top Card: Profile, Shift Status & Workload Counts */}
       <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#e2d0fa]">
           {/* Caller Identity */}
@@ -177,15 +161,15 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-lg font-black text-[#1e1b4b]">{currentCaller.name}</h2>
                 <span className="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-[#f3efff] text-[#6c28f5] border border-[#e2d0fa]">
-                  KIU Manifest Agent Workspace
+                  Caller Workspace
                 </span>
               </div>
               <p className="text-xs text-[#7c7896] mt-0.5 font-medium flex flex-wrap items-center gap-1.5">
-                <span>Calling Date:</span>
+                <span>Date:</span>
                 <strong className="text-[#1e1b4b]">{formatFriendlyDate(callingDate, 'medium')}</strong>
                 {isToday(callingDate) && (
                   <span className="px-1.5 py-0.2 rounded-md text-[10px] font-extrabold bg-[#88d600]/20 text-[#4c7a00]">
-                    Today (Auto)
+                    Today
                   </span>
                 )}
                 <span>• WhatsApp:</span>
@@ -210,9 +194,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                     ? 'bg-[#88d600] text-white shadow-xs'
                     : 'text-[#7c7896] hover:text-[#1e1b4b]'
                 }`}
-                title="Mark shift as Available"
               >
-                <span className="w-2 h-2 rounded-full bg-white inline-block sm:hidden" />
                 Available
               </button>
               <button
@@ -224,9 +206,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                     ? 'bg-[#ffb800] text-white shadow-xs'
                     : 'text-[#7c7896] hover:text-[#1e1b4b]'
                 }`}
-                title="Mark shift as Busy"
               >
-                <span className="w-2 h-2 rounded-full bg-white inline-block sm:hidden" />
                 Busy
               </button>
               <button
@@ -238,17 +218,15 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                     ? 'bg-[#ff2a85] text-white shadow-xs'
                     : 'text-[#7c7896] hover:text-[#1e1b4b]'
                 }`}
-                title="Mark shift as Unavailable"
               >
-                <span className="w-2 h-2 rounded-full bg-white inline-block sm:hidden" />
-                Off Shift
+                Off
               </button>
             </div>
 
-            {/* Quick Switch Agent (for supervisor or testing) */}
+            {/* Quick Switch Agent (for admin/testing) */}
             {onSwitchCaller && allCallers.length > 1 && (
               <div className="flex items-center gap-2 bg-[#f8f2fe] border border-[#e2d0fa] rounded-2xl p-1.5">
-                <span className="text-xs text-[#7c7896] font-bold pl-1 hidden lg:inline">Switch:</span>
+                <span className="text-xs text-[#7c7896] font-bold pl-1 hidden lg:inline">Caller:</span>
                 <select
                   value={currentCaller.id}
                   onChange={(e) => onSwitchCaller(e.target.value)}
@@ -266,255 +244,168 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* Status Warning if marked Unavailable */}
-        {currentCaller.availabilityStatus === 'unavailable' && (
-          <div className="mt-4 p-3.5 bg-[#fff1f2] border border-[#fecdd3] rounded-2xl text-xs text-[#ff2a85] flex items-center gap-2 font-medium">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>
-              You are marked as <strong>Off Shift / Unavailable</strong>. Your remaining {pendingCount} pending leads can be reassigned by the administrator to active callers.
-            </span>
-          </div>
-        )}
-
-        {/* Workload Metrics Row */}
-        <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-[#f5ecfd] p-3.5 sm:p-4 rounded-2xl border border-[#e2d0fa]">
+        {/* Workload Counts */}
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="bg-[#f5ecfd] p-3.5 rounded-2xl border border-[#e2d0fa] text-center sm:text-left">
             <span className="text-[11px] font-bold text-[#7c7896] uppercase tracking-wider">
               Total Assigned
             </span>
-            <div className="text-xl sm:text-2xl font-black text-[#1e1b4b] mt-1">{totalAssigned}</div>
+            <div className="text-xl sm:text-2xl font-black text-[#1e1b4b] mt-0.5">{totalAssigned}</div>
           </div>
 
-          <div className="bg-[#88d600]/10 p-3.5 sm:p-4 rounded-2xl border border-[#88d600]/20">
+          <div className="bg-[#88d600]/10 p-3.5 rounded-2xl border border-[#88d600]/20 text-center sm:text-left">
             <span className="text-[11px] font-bold text-[#629c00] uppercase tracking-wider">
               Completed
             </span>
-            <div className="text-xl sm:text-2xl font-black text-[#4a7700] mt-1">{completedCount}</div>
+            <div className="text-xl sm:text-2xl font-black text-[#4a7700] mt-0.5">{completedCount}</div>
           </div>
 
-          <div className="bg-[#ffb800]/10 p-3.5 sm:p-4 rounded-2xl border border-[#ffb800]/20">
+          <div className="bg-[#ffb800]/10 p-3.5 rounded-2xl border border-[#ffb800]/20 text-center sm:text-left">
             <span className="text-[11px] font-bold text-[#b47800] uppercase tracking-wider">
-              Pending Calls
+              Pending
             </span>
-            <div className="text-xl sm:text-2xl font-black text-[#925f00] mt-1">{pendingCount}</div>
+            <div className="text-xl sm:text-2xl font-black text-[#925f00] mt-0.5">{pendingCount}</div>
           </div>
+        </div>
+      </div>
 
-          <div className="bg-[#ff2a85]/10 p-3.5 sm:p-4 rounded-2xl border border-[#ff2a85]/20">
-            <span className="text-[11px] font-bold text-[#ff2a85] uppercase tracking-wider">
-              Follow-ups Due
-            </span>
-            <div className="text-xl sm:text-2xl font-black text-[#d61168] mt-1">{followUpCount}</div>
+      {/* CALL QUEUE & DIRECT FEEDBACK AREA */}
+      <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
+        {/* Scriptural Start Message: Hebrews 6:10 AMPC */}
+        <div className="m-4 p-4 bg-gradient-to-r from-[#fbf7fe] via-[#f5eaff] to-[#fbf7fe] border border-[#cbaff8] rounded-2xl shadow-2xs">
+          <div className="flex items-start gap-3">
+            <span className="text-xl shrink-0 mt-0.5" role="img" aria-label="dove">🕊️</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#6c28f5] bg-white px-2 py-0.5 rounded-full border border-[#cbaff8]">
+                  Hebrews 6:10 AMPC
+                </span>
+                <span className="text-xs font-bold text-[#1e1b4b]">
+                  Hebrew 6:10 says... Your effort and availability is not in vain
+                </span>
+              </div>
+              <p className="text-xs text-[#1e1b4b] font-medium italic leading-relaxed bg-white/60 p-2.5 rounded-xl border border-[#e2d0fa]">
+                &ldquo;[10] For God is not unrighteous to forget or overlook your labor and the love which you have shown for His name&apos;s sake in ministering to the needs of the saints (His own consecrated people), as you still do.&rdquo;
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Target Progress Bar */}
-        <div className="mt-4 bg-[#f5ecfd] p-3.5 sm:p-4 rounded-2xl border border-[#e2d0fa]">
-          <div className="flex items-center justify-between text-xs font-bold text-[#1e1b4b] mb-2">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-[#6c28f5]" />
-              Daily Shift Target: {completedCount} / {targetCalls} calls completed
-            </span>
-            <span className="font-black text-[#6c28f5]">{targetPercent}%</span>
+        {/* Filter and Search Bar */}
+        <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setFilterTab('all')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                filterTab === 'all'
+                  ? 'bg-[#6c28f5] text-white shadow-xs'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
+              }`}
+            >
+              All Assigned ({totalAssigned})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterTab('pending')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                filterTab === 'pending'
+                  ? 'bg-[#ffb800] text-white shadow-xs'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
+              }`}
+            >
+              Pending ({pendingCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterTab('completed')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                filterTab === 'completed'
+                  ? 'bg-[#88d600] text-white shadow-xs'
+                  : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
+              }`}
+            >
+              Completed ({completedCount})
+            </button>
           </div>
-          <div className="w-full bg-[#dfcafa] rounded-full h-2.5 overflow-hidden p-0.5">
-            <div
-              className="bg-[#6c28f5] h-1.5 rounded-full transition-all duration-500 shadow-xs"
-              style={{ width: `${targetPercent}%` }}
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#7c7896]" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search assigned leads..."
+              className="pl-8 pr-3 py-1.5 text-xs bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white w-full sm:w-60 font-medium text-[#1e1b4b]"
             />
           </div>
         </div>
 
-        {/* Caller Portal Sub-tabs: Queue, Performance, History */}
-        <div className="mt-5 pt-3 border-t border-[#e2d0fa] flex items-center gap-2 overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setSubTab('queue')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              subTab === 'queue'
-                ? 'bg-[#6c28f5] text-white shadow-md shadow-purple-950/20'
-                : 'bg-[#f8f2fe] text-[#7c7896] hover:text-[#1e1b4b] hover:bg-[#f3efff] border border-[#e2d0fa]'
-            }`}
-          >
-            <ListTodo className="w-4 h-4" />
-            <span>My Call Queue ({pendingCount})</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSubTab('performance')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              subTab === 'performance'
-                ? 'bg-[#6c28f5] text-white shadow-md shadow-purple-950/20'
-                : 'bg-[#f8f2fe] text-[#7c7896] hover:text-[#1e1b4b] hover:bg-[#f3efff] border border-[#e2d0fa]'
-            }`}
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span>Shift Target & Performance</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setSubTab('history')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              subTab === 'history'
-                ? 'bg-[#6c28f5] text-white shadow-md shadow-purple-950/20'
-                : 'bg-[#f8f2fe] text-[#7c7896] hover:text-[#1e1b4b] hover:bg-[#f3efff] border border-[#e2d0fa]'
-            }`}
-          >
-            <History className="w-4 h-4" />
-            <span>Call Activity Log ({myAttempts.length})</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ==================== SUB-VIEW 1: CALL QUEUE ==================== */}
-      {subTab === 'queue' && (
-        <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
-          {/* Scriptural Start Message for Caller Assignment Layout: Hebrews 6:10 AMPC */}
-          <div className="m-4 p-4 bg-gradient-to-r from-[#fbf7fe] via-[#f5eaff] to-[#fbf7fe] border border-[#cbaff8] rounded-2xl shadow-2xs">
-            <div className="flex items-start gap-3">
-              <span className="text-xl shrink-0 mt-0.5" role="img" aria-label="dove">🕊️</span>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#6c28f5] bg-white px-2 py-0.5 rounded-full border border-[#cbaff8]">
-                    Hebrews 6:10 AMPC
-                  </span>
-                  <span className="text-xs font-bold text-[#1e1b4b]">
-                    Hebrew 6:10 says... Your effort and availability is not in vain
-                  </span>
-                </div>
-                <p className="text-xs text-[#1e1b4b] font-medium italic leading-relaxed bg-white/60 p-2.5 rounded-xl border border-[#e2d0fa]">
-                  &ldquo;[10] For God is not unrighteous to forget or overlook your labor and the love which you have shown for His name&apos;s sake in ministering to the needs of the saints (His own consecrated people), as you still do.&rdquo;
-                </p>
-              </div>
+        {/* Assigned Contacts with Direct Feedback Column */}
+        <div className="divide-y divide-[#e2d0fa]">
+          {filteredAssignments.length === 0 ? (
+            <div className="p-12 text-center text-xs text-[#7c7896] font-medium">
+              {searchTerm
+                ? 'No matching contacts found.'
+                : filterTab === 'completed'
+                ? 'No completed calls yet.'
+                : 'No contacts assigned to your queue for this date.'}
             </div>
-          </div>
+          ) : (
+            filteredAssignments.map((asg, index) => {
+              const cleanPhone = asg.contactPhone.replace(/[^0-9]/g, '');
+              const waGreeting = encodeURIComponent(
+                `Hello ${asg.contactName}, this is ${currentCaller.name} following up with you from KIU Manifest.`
+              );
+              const isCompleted = asg.status === 'Completed';
+              const currentOutcome = asg.lastOutcome;
+              const isSavedJustNow = justSavedId === asg.id;
 
-          {/* Filter and Search Bar */}
-          <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-1.5 overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setFilterTab('pending')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterTab === 'pending'
-                    ? 'bg-[#ffb800] text-white shadow-xs'
-                    : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
-                }`}
-              >
-                Pending Calls ({pendingCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterTab('followup')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterTab === 'followup'
-                    ? 'bg-[#ff2a85] text-white shadow-xs'
-                    : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
-                }`}
-              >
-                Follow-ups ({followUpCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterTab('completed')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterTab === 'completed'
-                    ? 'bg-[#88d600] text-white shadow-xs'
-                    : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
-                }`}
-              >
-                Completed ({completedCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterTab('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  filterTab === 'all'
-                    ? 'bg-[#6c28f5] text-white shadow-xs'
-                    : 'bg-[#f8f2fe] text-[#1e1b4b] border border-[#e2d0fa] hover:bg-[#efe0fc]'
-                }`}
-              >
-                All Assigned ({totalAssigned})
-              </button>
-            </div>
-
-            {/* Search */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-[#7c7896]" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search name, phone, district..."
-                className="pl-8 pr-3 py-1.5 text-xs bg-[#f8f2fe] border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] focus:bg-white w-full sm:w-60 font-medium text-[#1e1b4b]"
-              />
-            </div>
-          </div>
-
-          {/* Contact Queue Items */}
-          <div className="divide-y divide-[#e2d0fa]">
-            {filteredAssignments.length === 0 ? (
-              <div className="text-center py-12 text-[#7c7896] text-xs font-medium">
-                {totalAssigned === 0
-                  ? 'No contacts have been assigned to you for today yet. Contact the Administrator to distribute leads.'
-                  : 'No contacts found matching the active filter.'}
-              </div>
-            ) : (
-              filteredAssignments.map((asg, index) => {
-                const isCompleted = asg.status === 'Completed';
-                const isReassigned =
-                  asg.reassignmentHistory && asg.reassignmentHistory.length > 0;
-                const cleanPhone = asg.contactPhone.replace(/[^0-9]/g, '');
-                const waGreeting = encodeURIComponent(
-                  `Hello ${asg.contactName}, this is ${currentCaller.name} following up with you today regarding your inquiry.`
-                );
-
-                return (
-                  <div
-                    key={asg.id}
-                    className={`p-4 transition-colors flex flex-col xl:flex-row xl:items-center justify-between gap-4 ${
-                      isCompleted ? 'bg-[#f8f2fe]/60' : 'hover:bg-[#f3e9fd] bg-[#fbf7fe]'
-                    }`}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-[#7c7896] font-mono text-xs w-6">
-                          #{index + 1}
+              return (
+                <div
+                  key={asg.id}
+                  className={`p-4 sm:p-5 transition-colors ${
+                    isCompleted ? 'bg-[#fbfaff]' : 'hover:bg-[#f6eeff]'
+                  }`}
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                    {/* COLUMN 1: Contact Details & Quick Calling Actions (lg: 5 cols) */}
+                    <div className="lg:col-span-5 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-[#f3efff] text-[#6c28f5] text-[11px] font-black flex items-center justify-center border border-[#e2d0fa] shrink-0">
+                          {index + 1}
                         </span>
-                        <h4 className="font-bold text-[#1e1b4b] text-sm">{asg.contactName}</h4>
-                        {isCompleted ? (
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#88d600]/15 text-[#629c00] flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            {asg.lastOutcome || 'Completed'}
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#ffb800]/15 text-[#b47800] flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            Pending Call
+                        <h4 className="text-sm font-black text-[#1e1b4b] truncate">
+                          {asg.contactName}
+                        </h4>
+
+                        {isCompleted && (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-[#88d600]/20 text-[#4c7a00] border border-[#88d600]/30 flex items-center gap-1 shrink-0">
+                            <Check className="w-3 h-3" /> Done
                           </span>
                         )}
 
-                        {isReassigned && (
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#f3efff] text-[#6c28f5] flex items-center gap-1 border border-[#e8e1f9]">
-                            <RotateCcw className="w-3 h-3" />
-                            Reassigned
+                        {asg.reassignmentHistory && asg.reassignmentHistory.length > 0 && (
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#ffb800]/20 text-[#925f00] flex items-center gap-0.5 shrink-0">
+                            <RotateCcw className="w-2.5 h-2.5" /> Reassigned
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#7c7896] pl-8 font-medium">
-                        <span className="font-mono text-[#6c28f5] font-bold">
+                      {/* Phone & Location Metadata */}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#7c7896] font-medium">
+                        <span className="font-mono text-[#6c28f5] font-bold text-xs sm:text-sm">
                           {asg.contactPhone}
                         </span>
-                        {asg.contactLocation && (
-                          <span className="flex items-center gap-1">
+                        {asg.contactLocation && asg.contactLocation !== 'Unspecified' && (
+                          <span className="flex items-center gap-1 text-[11px]">
                             <MapPin className="w-3 h-3 text-[#7c7896]" />
                             {asg.contactLocation}
                           </span>
                         )}
-                        {asg.contactCategory && (
-                          <span className="flex items-center gap-1">
+                        {asg.contactCategory && asg.contactCategory !== 'General' && (
+                          <span className="flex items-center gap-1 text-[11px]">
                             <Tag className="w-3 h-3 text-[#6c28f5]" />
                             {asg.contactCategory}
                           </span>
@@ -522,272 +413,150 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                       </div>
 
                       {asg.contactNotes && (
-                        <p className="text-xs text-[#7c7896] pl-8 italic">
-                          Notes: {asg.contactNotes}
+                        <p className="text-[11px] text-[#7c7896] italic bg-white/70 px-2 py-1 rounded-lg border border-[#e2d0fa] max-w-md">
+                          Note: {asg.contactNotes}
                         </p>
                       )}
 
-                      {/* Quick 1-Click Outcome Buttons for Fast Logging */}
-                      <div className="flex flex-wrap items-center gap-1.5 pl-8 pt-1">
-                        <span className="text-[10px] font-bold text-[#7c7896] uppercase tracking-wider mr-1 flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-[#ffb800]" /> Quick Log:
+                      {/* Action buttons: Call / WhatsApp */}
+                      <div className="flex items-center gap-2 pt-1">
+                        <a
+                          href={`tel:${asg.contactPhone}`}
+                          className="px-3 py-1 bg-[#f3efff] hover:bg-[#6c28f5] text-[#6c28f5] hover:text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors border border-[#e2d0fa]"
+                          title="Dial contact"
+                        >
+                          <PhoneCall className="w-3.5 h-3.5" />
+                          <span>Call</span>
+                        </a>
+
+                        <a
+                          href={`https://wa.me/${cleanPhone}?text=${waGreeting}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-1 bg-[#25D366]/15 hover:bg-[#25D366] text-[#128C7E] hover:text-white border border-[#25D366]/30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors"
+                          title="Open WhatsApp message"
+                        >
+                          <MessageSquare className="w-3.5 h-3.5" />
+                          <span>WhatsApp</span>
+                        </a>
+
+                        {currentOutcome && (
+                          <span className="ml-auto text-[11px] font-black px-2 py-0.5 rounded-lg bg-[#6c28f5]/10 text-[#6c28f5] border border-[#6c28f5]/20">
+                            Logged: {currentOutcome}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* COLUMN 2: Direct Feedback Tick-Boxes (lg: 7 cols) */}
+                    <div className="lg:col-span-7 bg-[#fbf7fe] p-3.5 rounded-2xl border border-[#e2d0fa] space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black text-[#1e1b4b] uppercase tracking-wider flex items-center gap-1">
+                          <Zap className="w-3 h-3 text-[#ffb800]" />
+                          Input Feedback (Click to Record Outcome):
                         </span>
-                        {(['Available', 'Recall', 'Busy', 'No Answer', 'Phone Off', 'Interested'] as CallOutcome[]).map((oc) => (
-                          <button
-                            key={oc}
-                            type="button"
-                            onClick={() => handleQuickOutcome(asg, oc)}
-                            disabled={quickActionLoadingId === asg.id + oc}
-                            className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-[#f0e7fe] hover:bg-[#6c28f5] text-[#5816d6] hover:text-white border border-[#e2d0fa] transition-colors cursor-pointer"
-                          >
-                            {quickActionLoadingId === asg.id + oc ? '...' : oc}
-                          </button>
-                        ))}
+                        {isSavedJustNow && (
+                          <span className="text-[11px] font-black text-[#4c7a00] bg-[#88d600]/20 px-2 py-0.5 rounded-full flex items-center gap-1 animate-pulse">
+                            <Check className="w-3 h-3" /> Saved!
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Row 1: Availability Checkboxes */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-bold text-[#7c7896] uppercase">Availability:</span>
+                        {availabilityOptions.map((opt) => {
+                          const isSelected = currentOutcome === opt.outcome;
+                          const isSaving = savingFeedbackKey === `${asg.id}-${opt.outcome}`;
+
+                          return (
+                            <button
+                              key={opt.outcome}
+                              type="button"
+                              onClick={() => handleSelectFeedback(asg, opt.outcome)}
+                              disabled={isSaving}
+                              className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all cursor-pointer ${
+                                isSelected
+                                  ? opt.color === 'emerald'
+                                    ? 'bg-[#88d600] text-white border-[#88d600] shadow-xs'
+                                    : 'bg-[#ff2a85] text-white border-[#ff2a85] shadow-xs'
+                                  : 'bg-white text-[#1e1b4b] border-[#e2d0fa] hover:border-[#6c28f5] hover:bg-[#f5ecfd]'
+                              }`}
+                            >
+                              <span
+                                className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                                  isSelected
+                                    ? 'bg-white text-[#1e1b4b] border-white'
+                                    : 'border-[#cbaff8]'
+                                }`}
+                              >
+                                {isSelected ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : null}
+                              </span>
+                              <span>{isSaving ? 'Saving...' : opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Row 2: Feedback Outcome Column Boxes (Confirmed, Unconfirmed, Needs Follow-up, Be Reminded, etc.) */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {primaryFeedbackBoxes.map((box) => {
+                          const isSelected = currentOutcome === box.outcome;
+                          const isSaving = savingFeedbackKey === `${asg.id}-${box.outcome}`;
+
+                          return (
+                            <button
+                              key={box.outcome}
+                              type="button"
+                              onClick={() => handleSelectFeedback(asg, box.outcome)}
+                              disabled={isSaving}
+                              className={`p-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer text-left ${
+                                isSelected
+                                  ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
+                                  : 'bg-white text-[#1e1b4b] border-[#e2d0fa] hover:border-[#6c28f5] hover:bg-[#f5ecfd]'
+                              }`}
+                            >
+                              <span
+                                className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                                  isSelected
+                                    ? 'bg-white text-[#6c28f5] border-white'
+                                    : 'border-[#cbaff8]'
+                                }`}
+                              >
+                                {isSelected ? <Check className="w-3 h-3 stroke-[3]" /> : null}
+                              </span>
+                              <span className="truncate">{isSaving ? '...' : box.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Optional inline quick note */}
+                      <div className="pt-1">
+                        <input
+                          type="text"
+                          placeholder="Quick feedback notes (e.g. Call back at 3 PM, agreed)..."
+                          value={notesDrafts[asg.id] ?? ''}
+                          onChange={(e) =>
+                            setNotesDrafts((prev) => ({ ...prev, [asg.id]: e.target.value }))
+                          }
+                          onBlur={() => {
+                            const val = notesDrafts[asg.id];
+                            if (val && currentOutcome) {
+                              handleSelectFeedback(asg, currentOutcome);
+                            }
+                          }}
+                          className="w-full text-xs px-3 py-1.5 bg-white border border-[#e2d0fa] rounded-xl outline-none focus:border-[#6c28f5] font-medium text-[#1e1b4b] placeholder-[#a6a1c2]"
+                        />
                       </div>
                     </div>
-
-                    {/* Primary Calling and Feedback Actions */}
-                    <div className="flex flex-wrap items-center gap-2 pl-8 xl:pl-0">
-                      {/* Direct Tel Call */}
-                      <a
-                        href={`tel:${asg.contactPhone}`}
-                        className="px-3 py-1.5 bg-[#f3efff] hover:bg-[#efe8fc] text-[#6c28f5] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
-                        title="Direct phone call"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5 text-[#6c28f5]" />
-                        <span>Call</span>
-                      </a>
-
-                      {/* WhatsApp Chat Link */}
-                      <a
-                        href={`https://wa.me/${cleanPhone}?text=${waGreeting}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="px-3 py-1.5 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#128C7E] border border-[#25D366]/30 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors shadow-xs"
-                        title="Open WhatsApp chat with contact"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
-                      </a>
-
-                      {/* Record Detailed Feedback */}
-                      <button
-                        type="button"
-                        onClick={() => setActiveFeedbackAssignment(asg)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5 ${
-                          isCompleted
-                            ? 'bg-[#fbf9ff] hover:bg-[#f3efff] text-[#7c7896] hover:text-[#1e1b4b] border border-[#efe8fc]'
-                            : 'bg-[#6c28f5] hover:bg-[#5816d6] text-white shadow-purple-600/20'
-                        }`}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{isCompleted ? 'Edit Feedback' : 'Log Feedback'}</span>
-                      </button>
-
-                      {/* History button */}
-                      <button
-                        type="button"
-                        onClick={() => setHistoryContact({ id: asg.contactId, name: asg.contactName })}
-                        className="p-2 text-[#7c7896] hover:text-[#1e1b4b] hover:bg-[#f3efff] rounded-xl transition-colors cursor-pointer"
-                        title="View contact call history"
-                      >
-                        <History className="w-4 h-4" />
-                      </button>
-                    </div>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== SUB-VIEW 2: SHIFT PERFORMANCE ==================== */}
-      {subTab === 'performance' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Target Completion Card */}
-            <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
-                  Target Fulfillment
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-[#1e1b4b]">{completedCount}</span>
-                  <span className="text-sm font-bold text-[#7c7896]">/ {targetCalls} calls target</span>
                 </div>
-                <div className="mt-4 w-full bg-[#dfcafa] rounded-full h-3 overflow-hidden p-0.5">
-                  <div
-                    className="bg-[#6c28f5] h-2 rounded-full transition-all duration-500 shadow-xs"
-                    style={{ width: `${targetPercent}%` }}
-                  />
-                </div>
-              </div>
-              <p className="text-xs text-[#7c7896] mt-4 font-medium">
-                {targetPercent >= 100
-                  ? 'Outstanding work! Daily target has been achieved.'
-                  : `${targetCalls - completedCount} more calls needed to meet your target.`}
-              </p>
-            </div>
-
-            {/* Completion Rate */}
-            <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
-                  Assigned Queue Pacing
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-[#629c00]">{progressPercent}%</span>
-                  <span className="text-sm font-bold text-[#7c7896]">of today’s queue handled</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between text-xs text-[#7c7896] font-semibold">
-                  <span>Pending: {pendingCount}</span>
-                  <span>Handled: {completedCount}</span>
-                </div>
-              </div>
-              <p className="text-xs text-[#7c7896] mt-4 font-medium">
-                Keep an eye on contacts with scheduled callbacks to ensure zero missed follow-ups.
-              </p>
-            </div>
-
-            {/* Total Call Attempts */}
-            <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#7c7896] uppercase tracking-wider">
-                  Call Logs Recorded
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-[#ff2a85]">{myAttempts.length}</span>
-                  <span className="text-sm font-bold text-[#7c7896]">total attempts logged</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-[#e2d0fa] flex items-center justify-between text-xs">
-                <span className="text-[#7c7896] font-medium">Follow-ups scheduled:</span>
-                <span className="font-bold text-[#ff2a85]">{followUpCount}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Outcome Breakdown Grid */}
-          <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] p-6 shadow-sm">
-            <h3 className="text-sm font-black text-[#1e1b4b] mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#6c28f5]" />
-              Breakdown of Call Outcomes Logged Today
-            </h3>
-            {Object.keys(outcomeCounts).length === 0 ? (
-              <p className="text-xs text-[#7c7896] font-medium">
-                No outcomes logged yet. Start dialing contacts from your call queue.
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {Object.entries(outcomeCounts).map(([outcomeName, count]) => (
-                  <div
-                    key={outcomeName}
-                    className="p-3 bg-[#f5ecfd] rounded-2xl border border-[#e2d0fa] flex items-center justify-between"
-                  >
-                    <span className="text-xs font-bold text-[#1e1b4b]">{outcomeName}</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-black bg-[#6c28f5] text-white">
-                      {count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== SUB-VIEW 3: CALL ACTIVITY HISTORY ==================== */}
-      {subTab === 'history' && (
-        <div className="bg-[#fbf7fe] rounded-3xl border border-[#e2d0fa] shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-[#e2d0fa] bg-[#f3e8fd] flex items-center justify-between">
-            <h3 className="text-sm font-black text-[#1e1b4b] flex items-center gap-2">
-              <History className="w-4 h-4 text-[#6c28f5]" />
-              Call Attempt History for {currentCaller.name} ({myAttempts.length})
-            </h3>
-            <span className="text-xs font-bold text-[#7c7896]">
-              Date: {formatFriendlyDate(callingDate, 'short')} {isToday(callingDate) ? '(Today)' : ''}
-            </span>
-          </div>
-
-          {myAttempts.length === 0 ? (
-            <div className="p-12 text-center text-xs text-[#7c7896] font-medium">
-              No calls have been logged yet for this agent today.
-            </div>
-          ) : (
-            <div className="divide-y divide-[#e2d0fa]">
-              {myAttempts
-                .slice()
-                .reverse()
-                .map((att) => {
-                  const asg = assignments.find((a) => a.id === att.assignmentId);
-                  const contactName = asg ? asg.contactName : `Contact #${att.contactId}`;
-                  const contactPhone = asg ? asg.contactPhone : '';
-
-                  return (
-                    <div key={att.id} className="p-4 hover:bg-[#f3e9fd] transition-colors">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#1e1b4b] text-sm">{contactName}</span>
-                            <span className="font-mono text-xs text-[#6c28f5] font-semibold">
-                              {contactPhone}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#88d600]/15 text-[#629c00]">
-                              {att.outcome}
-                            </span>
-                          </div>
-
-                          {att.comment && (
-                            <p className="text-xs text-[#7c7896] italic">"{att.comment}"</p>
-                          )}
-
-                          {att.followUpDate && (
-                            <div className="text-[11px] text-[#ff2a85] font-semibold flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              Scheduled Follow-up: {att.followUpDate} {att.preferredCallbackTime && `at ${att.preferredCallbackTime}`}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="text-right text-[11px] text-[#7c7896] font-mono">
-                          {new Date(att.calledAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
+              );
+            })
           )}
         </div>
-      )}
-
-      {/* Modals */}
-      {activeFeedbackAssignment && (
-        <CallFeedbackModal
-          assignment={activeFeedbackAssignment}
-          callerName={currentCaller.name}
-          callerId={currentCaller.id}
-          onSaveAttempt={onSaveAttempt}
-          onClose={() => setActiveFeedbackAssignment(null)}
-          onViewHistory={(id, name) => {
-            setActiveFeedbackAssignment(null);
-            setHistoryContact({ id, name });
-          }}
-        />
-      )}
-
-      {historyContact && (
-        <ContactHistoryModal
-          contactId={historyContact.id}
-          contactName={historyContact.name}
-          attempts={attempts}
-          onClose={() => setHistoryContact(null)}
-        />
-      )}
+      </div>
     </div>
   );
 };

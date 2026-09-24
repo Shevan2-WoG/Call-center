@@ -45,9 +45,7 @@ import { DistributionView } from './components/DistributionView';
 import { ContactsView } from './components/ContactsView';
 import { CallerTeamView } from './components/CallerTeamView';
 import { CallerDashboardView } from './components/CallerDashboardView';
-import { ReassignmentView } from './components/ReassignmentView';
 import { ReportsView } from './components/ReportsView';
-import { AuditView } from './components/AuditView';
 import { HomeView } from './components/HomeView';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { EraseDataModal } from './components/EraseDataModal';
@@ -287,11 +285,22 @@ export default function App() {
     }
   };
 
-  // Caller Delete Handler (Blocked by system policy: Callers are permanent and cannot be deleted)
-  const handleDeleteCaller = async (_id: string) => {
-    alert(
-      'Policy Restriction: Callers are permanent and cannot be deleted from the system.\n\nIf this caller is unavailable today, please toggle their status to "Off" (Unavailable) in the Permanent Callers management screen.'
-    );
+  // Caller Delete Handler (Allows admin to delete callers)
+  const handleDeleteCaller = async (id: string) => {
+    const caller = callers.find((c) => c.id === id);
+    const callerName = caller ? caller.name : 'this caller';
+    if (!window.confirm(`Are you sure you want to delete caller "${callerName}" from the system?`)) {
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      await deleteCaller(id);
+      await loadData();
+    } catch (err: any) {
+      alert(`Failed to delete caller: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   // Call Feedback Attempt Save Handler
@@ -646,19 +655,9 @@ export default function App() {
               callers={callers}
               callingDate={callingDate}
               onSaveCaller={handleSaveCaller}
+              onDeleteCaller={handleDeleteCaller}
               onTriggerReassignment={handleTriggerReassignment}
               onSwitchToCaller={handleSwitchToCaller}
-            />
-          )}
-
-          {adminTab === 'reassignment' && (
-            <ReassignmentView
-              callers={callers}
-              assignments={assignments}
-              callingDate={callingDate}
-              reassignments={reassignments}
-              onExecuteReassignment={handleExecuteReassignment}
-              preselectedCallerId={reassignmentTargetCallerId}
             />
           )}
 
@@ -668,18 +667,6 @@ export default function App() {
               assignments={assignments}
               attempts={attempts}
               callers={callers}
-            />
-          )}
-
-          {adminTab === 'audit' && (
-            <AuditView
-              logs={auditLogs}
-              counts={{
-                contacts: contacts.length,
-                callers: callers.length,
-                assignments: assignments.length,
-                attempts: attempts.length,
-              }}
             />
           )}
         </main>

@@ -158,6 +158,48 @@ export function generateWhatsAppUrl(whatsappNumber: string, message: string): st
 }
 
 /**
+ * Formats a single unified master message for all callers and contacts at a go
+ * Ideal for broadcasting into a team WhatsApp group or announcement list
+ */
+export function formatMasterBroadcastWhatsAppMessage(
+  callingDate: string,
+  roster: {
+    callerName: string;
+    whatsappNumber: string;
+    contacts: { name: string; phone: string; location?: string; category?: string; notes?: string }[];
+  }[]
+): string {
+  const startMessage = HEBREWS_6_10_START_MESSAGE;
+  const totalContacts = roster.reduce((sum, r) => sum + r.contacts.length, 0);
+
+  let header = `📢 *KIU MANIFEST CALL CENTER — ALL-TEAM DAILY ASSIGNMENTS*\n` +
+    `📅 Date: ${callingDate}\n` +
+    `👥 Active Calling Team: ${roster.length} Callers\n` +
+    `📊 Total Assigned Contacts: ${totalContacts}\n` +
+    `━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  let body = roster.map((r, rIdx) => {
+    let callerHeader = `👤 *CALLER ${rIdx + 1}: ${r.callerName.toUpperCase()}* (${r.whatsappNumber})\n` +
+      `   📋 Total Leads: ${r.contacts.length}\n`;
+    
+    let contactsList = r.contacts.map((c, cIdx) => {
+      let line = `   ${cIdx + 1}. *${c.name}* • 📱 ${c.phone}`;
+      if (c.location && c.location !== 'Unspecified') line += ` • 📍 ${c.location}`;
+      if (c.notes) line += ` (Note: ${c.notes})`;
+      return line;
+    }).join('\n');
+
+    return callerHeader + (contactsList || '   No contacts assigned.') + '\n';
+  }).join('\n━━━━━━━━━━━━━━━━━━━━\n\n');
+
+  let footer = `\n━━━━━━━━━━━━━━━━━━━━\n` +
+    `✅ All callers: Please login to your Caller Portal to log feedback immediately after dialing!\n` +
+    `🏢 Operations Owner: Muhindo • Platform: Arnible`;
+
+  return startMessage + header + body + footer;
+}
+
+/**
  * Redistribute unfinished assignments of an unavailable caller among active callers
  * Spec Section 14
  */

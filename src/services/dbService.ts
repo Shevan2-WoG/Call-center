@@ -100,9 +100,15 @@ export async function saveCaller(caller: Caller): Promise<void> {
 }
 
 export async function deleteCaller(callerId: string): Promise<void> {
-  // CRITICAL USER DIRECTIVE: Callers can only be added/edited, but CANNOT be deleted.
-  console.warn(`Blocked deletion attempt for caller ${callerId}. Callers are permanent and cannot be deleted.`);
-  throw new Error('Callers are permanent and cannot be deleted from the system.');
+  const callers = getLocal<Caller[]>(STORAGE_KEYS.CALLERS, []);
+  const updated = callers.filter(c => c.id !== callerId);
+  setLocal(STORAGE_KEYS.CALLERS, updated);
+
+  try {
+    await deleteDoc(doc(db, 'callers', callerId));
+  } catch (err) {
+    console.warn('Firestore delete caller error', err);
+  }
 }
 
 // ------------------- CONTACTS -------------------

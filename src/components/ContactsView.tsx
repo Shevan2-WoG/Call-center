@@ -204,7 +204,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
   const handleEraseBatch = async (sourceName: string, displayName: string) => {
     if (
       !window.confirm(
-        `Are you sure you want to erase "${displayName}"?\n\n✔ Only contacts from this specific Excel spreadsheet will be removed.\n✔ Callers cannot and will not be deleted; all callers remain 100% constant.`
+        `Are you sure you want to erase "${displayName}"?\n\n✔ Only contacts from this specific Excel spreadsheet will be removed.\n✔ Caller profiles and team rosters remain protected and preserved.`
       )
     ) {
       return;

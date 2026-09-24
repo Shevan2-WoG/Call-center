@@ -107,6 +107,10 @@ export interface Assignment {
 export type CallOutcome =
   | 'Available'
   | 'Unavailable'
+  | 'Confirmed'
+  | 'Unconfirmed'
+  | 'Needs Follow-up'
+  | 'Be Reminded'
   | 'Recall'
   | 'Phone Off'
   | 'No Answer'
@@ -121,6 +125,10 @@ export type CallOutcome =
 export const CALL_OUTCOMES: CallOutcome[] = [
   'Available',
   'Unavailable',
+  'Confirmed',
+  'Unconfirmed',
+  'Needs Follow-up',
+  'Be Reminded',
   'Recall',
   'Phone Off',
   'No Answer',

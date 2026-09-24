@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   Sparkles,
   Lock,
+  Trash2,
 } from 'lucide-react';
 
 interface CallerTeamViewProps {
@@ -24,7 +25,7 @@ interface CallerTeamViewProps {
   callingDate: string;
   onSaveCaller: (caller: Caller) => Promise<void>;
   onDeleteCaller?: (id: string) => Promise<void>;
-  onTriggerReassignment: (caller: Caller) => void;
+  onTriggerReassignment?: (caller: Caller) => void;
   onSwitchToCaller?: (callerId: string) => void;
 }
 
@@ -115,7 +116,7 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
     };
     await onSaveCaller(updated);
 
-    if (newStatus === 'unavailable') {
+    if (newStatus === 'unavailable' && onTriggerReassignment) {
       onTriggerReassignment(updated);
     }
   };
@@ -169,13 +170,13 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
         </div>
         <div className="space-y-0.5 text-xs">
           <span className="font-black text-[#1e1b4b] flex items-center gap-1.5">
-            <span>Caller Protection Policy: Callers Can Only Be Added — Never Deleted</span>
+            <span>Team Caller Management &amp; Persistence</span>
             <span className="px-2 py-0.2 bg-[#6c28f5] text-white text-[10px] font-extrabold rounded-md flex items-center gap-0.5">
-              <Lock className="w-2.5 h-2.5" /> Undeletable
+              <Users className="w-2.5 h-2.5" /> Caller Directory
             </span>
           </span>
           <p className="text-[#645f82] font-medium leading-relaxed">
-            Every caller profile, WhatsApp phone number, and target entered is saved permanently. Callers <strong>cannot be deleted</strong>, guaranteeing that your historical logs, daily metrics, and team rosters remain unbroken. If an agent is not working today, simply toggle their status to <strong>&ldquo;Off&rdquo;</strong> (Unavailable) to skip them from assignment runs. During any data erase or Excel reset, callers are 100% exempt and protected.
+            Registered callers persist across all daily campaigns. As an administrator, you can add new callers, edit phone numbers, toggle daily availability to <strong>&ldquo;Off&rdquo;</strong>, or delete callers who are no longer on the team.
           </p>
         </div>
       </div>
@@ -347,12 +348,16 @@ export const CallerTeamView: React.FC<CallerTeamViewProps> = ({
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
-                  <span
-                    className="p-1.5 text-purple-600 bg-[#f3efff] border border-[#e2d0fa] rounded-lg flex items-center justify-center cursor-help transition-all"
-                    title="Permanent Caller: Callers cannot be deleted from the system. If unavailable, toggle status to 'Off'."
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#6c28f5]" />
-                  </span>
+                  {onDeleteCaller && (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteCaller(caller.id)}
+                      className="p-1.5 text-[#ff2a85] hover:text-red-700 hover:bg-[#fff0f4] rounded-lg transition-colors cursor-pointer"
+                      title="Delete this caller"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

@@ -70,16 +70,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'dashboard', label: 'Distribution & Ops', icon: Share2 },
     { id: 'contacts', label: 'Contacts & Import', icon: FileSpreadsheet },
     { id: 'callers', label: 'Permanent Callers', icon: Users },
-    { id: 'reassignment', label: 'Smart Reassignment', icon: RotateCcw },
     { id: 'reports', label: 'Reports & Export', icon: BarChart3 },
-    { id: 'audit', label: 'Audit & Tech Log', icon: History },
   ];
 
   // Caller tabs list
   const callerTabs = [
-    { id: 'queue', label: 'My Call Queue', icon: ListTodo },
-    { id: 'performance', label: 'Shift Target & Stats', icon: TrendingUp },
-    { id: 'history', label: 'Call Activity History', icon: History },
+    { id: 'queue', label: 'My Call Queue & Feedback', icon: ListTodo },
   ];
 
   return (

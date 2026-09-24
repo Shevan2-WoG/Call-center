@@ -30,10 +30,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'tech_lead'] },
     { id: 'contacts', label: 'Contacts & Import', icon: FileSpreadsheet, roles: ['admin', 'tech_lead'] },
     { id: 'callers', label: 'Permanent Callers', icon: Users, roles: ['admin', 'tech_lead'] },
-    { id: 'reassignment', label: 'Reassignment', icon: RotateCcw, roles: ['admin', 'tech_lead'] },
     { id: 'caller_dashboard', label: 'Caller Dashboard', icon: Headset, roles: ['admin', 'caller', 'tech_lead'] },
     { id: 'reports', label: 'Order / Reports', icon: BarChart3, roles: ['admin', 'tech_lead'] },
-    { id: 'audit', label: 'Setting / Audit', icon: History, roles: ['tech_lead', 'admin'] },
   ];
 
   const filteredItems = menuItems.filter((item) => item.roles.includes(currentRole));
