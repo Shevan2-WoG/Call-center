@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Assignment, CallAttempt, Caller, AvailabilityStatus, CallOutcome } from '../types';
 import { formatFriendlyDate, isToday } from '../utils/dateUtils';
+import { PWAInstallButton } from './PWAInstallButton';
 import {
   Headset,
   PhoneCall,
@@ -241,6 +242,9 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                 </select>
               </div>
             )}
+
+            {/* PWA Install Button for mobile callers */}
+            <PWAInstallButton variant="compact" />
           </div>
         </div>
 

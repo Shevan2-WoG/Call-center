@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Caller } from '../types';
 import { isToday, formatFriendlyDate, getTodayDateString } from '../utils/dateUtils';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface NavbarProps {
   activeView: 'home' | 'caller' | 'admin';
@@ -153,6 +154,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )
               )}
             </div>
+
+            {/* PWA Install to Phone / Desktop Button */}
+            <PWAInstallButton variant="nav" />
 
             {/* CALLER PORTAL BUTTON: Open & readily accessible for all users */}
             {activeView !== 'caller' && (

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Caller, Assignment, CallAttempt } from '../types';
 import { formatFriendlyDate, isToday } from '../utils/dateUtils';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HomeViewProps {
   onEnterCallerPortal: (callerId?: string) => void;
@@ -93,6 +94,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <strong className="text-white">{callers.length}</strong> Agents Registered
             </span>
           </div>
+        </div>
+
+        {/* PWA INSTALL HERO CARD: Download & Add to Phone Desktop */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <PWAInstallButton variant="hero" />
         </div>
 
         {/* MAIN ACTION SECTION: Open Callers Portal */}

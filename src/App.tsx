@@ -49,6 +49,7 @@ import { ReportsView } from './components/ReportsView';
 import { HomeView } from './components/HomeView';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { EraseDataModal } from './components/EraseDataModal';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { Lock } from 'lucide-react';
 
 export default function App() {
@@ -733,6 +734,8 @@ export default function App() {
         onExecuteErase={handleExecuteSelectiveErase}
         isSyncing={isSyncing}
       />
+      {/* Offline Status Alert */}
+      <OfflineIndicator />
     </div>
   );
 }
