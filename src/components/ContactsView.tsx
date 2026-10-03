@@ -28,6 +28,8 @@ import {
   ShieldCheck,
   Lock,
   Layers,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface ContactsViewProps {
@@ -200,6 +202,18 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       (c.sheetName || '').trim().toLowerCase() === filterSheet.trim().toLowerCase();
     return matchesSearch && matchesCategory && matchesStatus && matchesSource && matchesSheet;
   });
+
+  // Pagination for contacts table (optimized for up to 1,000+ contacts)
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory, filterStatus, filterSource, filterSheet]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredContacts.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedContacts = filteredContacts.slice(startIndex, startIndex + pageSize);
 
   const handleEraseBatch = async (sourceName: string, displayName: string) => {
     if (
@@ -882,7 +896,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   </td>
                 </tr>
               ) : (
-                filteredContacts.map((contact, index) => {
+                paginatedContacts.map((contact, index) => {
                   const statusColors: Record<string, string> = {
                     unassigned: 'bg-[#ffb800]/15 text-[#b47800] border-[#ffb800]/30',
                     assigned: 'bg-[#6c28f5]/15 text-[#6c28f5] border-[#6c28f5]/30',
@@ -891,7 +905,7 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
                   };
                   return (
                     <tr key={contact.id} className="hover:bg-[#f4eafd] bg-[#fbf7fe] transition-colors">
-                      <td className="p-3 text-[#7c7896] font-mono">{index + 1}</td>
+                      <td className="p-3 text-[#7c7896] font-mono">{startIndex + index + 1}</td>
                       <td className="p-3 font-bold text-[#1e1b4b]">{contact.name}</td>
                       <td className="p-3 font-mono text-[#6c28f5] font-bold flex items-center gap-1.5">
                         <Phone className="w-3 h-3 text-[#6c28f5]" />
@@ -954,6 +968,62 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
             </tbody>
           </table>
         </div>
+
+        {/* Table Pagination Bar */}
+        {filteredContacts.length > 0 && (
+          <div className="p-3.5 border-t border-[#e2d0fa] bg-[#f8f2fe] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-[#7c7896]">
+              <span>
+                Showing <strong className="text-[#1e1b4b]">{filteredContacts.length === 0 ? 0 : startIndex + 1}</strong> to{' '}
+                <strong className="text-[#1e1b4b]">{Math.min(startIndex + pageSize, filteredContacts.length)}</strong> of{' '}
+                <strong className="text-[#6c28f5]">{filteredContacts.length}</strong> contacts
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px]">Rows per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-[#cbaff8] rounded-lg px-2 py-0.5 font-bold text-[#1e1b4b] outline-none"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={250}>250</option>
+                  <option value={500}>500</option>
+                  <option value={1000}>1,000 (All)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="px-2.5 py-1 rounded-lg border border-[#e2d0fa] bg-white hover:bg-[#f3efff] text-[#1e1b4b] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
+              </button>
+              <span className="px-3 py-1 font-black text-[#6c28f5] bg-[#f3efff] rounded-lg border border-[#cbaff8]">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="px-2.5 py-1 rounded-lg border border-[#e2d0fa] bg-white hover:bg-[#f3efff] text-[#1e1b4b] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Manual Add Contact Modal */}

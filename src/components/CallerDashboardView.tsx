@@ -14,6 +14,8 @@ import {
   Check,
   Zap,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 interface CallerDashboardViewProps {
@@ -84,6 +86,18 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
     if (filterTab === 'completed') return a.status === 'Completed';
     return true;
   });
+
+  // Pagination for caller queue (optimizes handling up to 1,000 distributed contacts)
+  const [pageSize, setPageSize] = useState<number>(50);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterTab]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAssignments.length / pageSize));
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedAssignments = filteredAssignments.slice(startIndex, startIndex + pageSize);
 
   // Handler to toggle shift availability status directly
   const handleUpdateStatus = async (newStatus: AvailabilityStatus) => {
@@ -357,7 +371,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                 : 'No contacts assigned to your queue for this date.'}
             </div>
           ) : (
-            filteredAssignments.map((asg, index) => {
+            paginatedAssignments.map((asg, index) => {
               const cleanPhone = asg.contactPhone.replace(/[^0-9]/g, '');
               const waGreeting = encodeURIComponent(
                 `Hello ${asg.contactName}, this is ${currentCaller.name} following up with you from KIU Manifest.`
@@ -378,7 +392,7 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                     <div className="lg:col-span-5 space-y-2">
                       <div className="flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-[#f3efff] text-[#6c28f5] text-[11px] font-black flex items-center justify-center border border-[#e2d0fa] shrink-0">
-                          {index + 1}
+                          {startIndex + index + 1}
                         </span>
                         <h4 className="text-sm font-black text-[#1e1b4b] truncate">
                           {asg.contactName}
@@ -560,6 +574,61 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
             })
           )}
         </div>
+
+        {/* Caller Queue Pagination Toolbar */}
+        {filteredAssignments.length > 0 && (
+          <div className="p-3.5 border-t border-[#e2d0fa] bg-[#f8f2fe] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2 text-[#7c7896]">
+              <span>
+                Showing <strong className="text-[#1e1b4b]">{filteredAssignments.length === 0 ? 0 : startIndex + 1}</strong> to{' '}
+                <strong className="text-[#1e1b4b]">{Math.min(startIndex + pageSize, filteredAssignments.length)}</strong> of{' '}
+                <strong className="text-[#6c28f5]">{filteredAssignments.length}</strong> leads
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px]">Per page:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-white border border-[#cbaff8] rounded-lg px-2 py-0.5 font-bold text-[#1e1b4b] outline-none"
+                >
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={250}>250</option>
+                  <option value={1000}>All (Up to 1,000)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="px-2.5 py-1 rounded-lg border border-[#e2d0fa] bg-white hover:bg-[#f3efff] text-[#1e1b4b] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Prev</span>
+              </button>
+              <span className="px-3 py-1 font-black text-[#6c28f5] bg-[#f3efff] rounded-lg border border-[#cbaff8]">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="px-2.5 py-1 rounded-lg border border-[#e2d0fa] bg-white hover:bg-[#f3efff] text-[#1e1b4b] font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

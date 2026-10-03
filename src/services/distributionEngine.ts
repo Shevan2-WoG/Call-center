@@ -158,6 +158,25 @@ export function generateWhatsAppUrl(whatsappNumber: string, message: string): st
 }
 
 /**
+ * Generates safe wa.me URL that prevents HTTP 414 URI Too Long errors in web browsers
+ * when a caller is assigned large batches (e.g. up to 1000 contacts distributed across the team).
+ * Safe threshold is ~1800 encoded characters.
+ */
+export function generateSafeWhatsAppUrl(whatsappNumber: string, fullMessage: string, maxChars = 1800): string {
+  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
+  if (fullMessage.length <= maxChars) {
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(fullMessage)}`;
+  }
+  // If the roster is huge, provide clean executive header with the top leads and guidance to use Portal or Copy Roster
+  const truncatedText = fullMessage.substring(0, maxChars - 280);
+  const safeMessage = truncatedText +
+    `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
+    `📋 *[Large Roster: Continued in Caller Portal]*\n` +
+    `💡 Complete roster is available via the "Copy Roster" button or by logging in to your Caller Portal to dial with 1-click feedback!`;
+  return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(safeMessage)}`;
+}
+
+/**
  * Formats a single unified master message for all callers and contacts at a go
  * Ideal for broadcasting into a team WhatsApp group or announcement list
  */

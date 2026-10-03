@@ -304,11 +304,13 @@ export async function updateAssignmentsBatch(updatedList: Assignment[]): Promise
   setLocal(STORAGE_KEYS.ASSIGNMENTS, updated);
 
   try {
-    const batch = writeBatch(db);
-    updatedList.slice(0, 100).forEach(asg => {
-      batch.set(doc(db, 'assignments', asg.id), asg, { merge: true });
-    });
-    await batch.commit();
+    for (let i = 0; i < updatedList.length; i += 400) {
+      const batch = writeBatch(db);
+      updatedList.slice(i, i + 400).forEach(asg => {
+        batch.set(doc(db, 'assignments', asg.id), asg, { merge: true });
+      });
+      await batch.commit();
+    }
   } catch (err) {
     console.warn('Firestore batch update assignments error', err);
   }
@@ -416,11 +418,13 @@ export async function saveReassignmentsBatch(records: Omit<ReassignmentRecord, '
   setLocal(STORAGE_KEYS.REASSIGNMENTS, [...existing, ...created]);
 
   try {
-    const batch = writeBatch(db);
-    created.slice(0, 100).forEach(r => {
-      batch.set(doc(db, 'reassignments', r.id), r);
-    });
-    await batch.commit();
+    for (let i = 0; i < created.length; i += 400) {
+      const batch = writeBatch(db);
+      created.slice(i, i + 400).forEach(r => {
+        batch.set(doc(db, 'reassignments', r.id), r);
+      });
+      await batch.commit();
+    }
   } catch (err) {
     console.warn('Firestore save reassignments error', err);
   }

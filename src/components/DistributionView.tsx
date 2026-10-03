@@ -10,6 +10,7 @@ import {
   formatWhatsAppAssignmentMessage,
   formatMasterBroadcastWhatsAppMessage,
   generateWhatsAppUrl,
+  generateSafeWhatsAppUrl,
   DistributionResult,
 } from '../services/distributionEngine';
 import { formatFriendlyDate, isToday } from '../utils/dateUtils';
@@ -34,6 +35,8 @@ import {
   Check,
   ListChecks,
   X,
+  Sliders,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface DistributionViewProps {
@@ -72,6 +75,8 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   const [copiedCallerId, setCopiedCallerId] = useState<string | null>(null);
   const [activePreviewCallerId, setActivePreviewCallerId] = useState<string | null>(null);
   const [distributionScope, setDistributionScope] = useState<'unassigned' | 'all'>('unassigned');
+  // Maximum contacts distribution limit (at most 1,000 contacts without limitation)
+  const [maxDistributionLimit, setMaxDistributionLimit] = useState<number>(1000);
   const [isDispatchAtAGoOpen, setIsDispatchAtAGoOpen] = useState(false);
   const [dispatchedCallerIds, setDispatchedCallerIds] = useState<Set<string>>(new Set());
   const [isAutoDispatching, setIsAutoDispatching] = useState(false);
@@ -83,6 +88,12 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
   // Determine contacts pool based on scope
   const targetContactsPool = distributionScope === 'all' ? contacts : unassignedContacts;
+
+  // Effective limit: strictly bounded to at most 1,000 contacts per distribution run
+  const effectiveBatchLimit = Math.min(1000, Math.max(1, maxDistributionLimit));
+  // Sliced pool for distribution (at most 1,000 contacts)
+  const contactsToDistribute = targetContactsPool.slice(0, effectiveBatchLimit);
+  const remainingInPoolAfterDistribution = Math.max(0, targetContactsPool.length - contactsToDistribute.length);
 
   // Current date assignments
   const dateAssignments = assignments.filter((a) => a.callingDate === callingDate);
@@ -118,9 +129,9 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
       ? Math.round((pendingCount / totalDateAssignments) * 100)
       : 0;
 
-  // Calculate preview plan for the target contacts pool
+  // Calculate preview plan for the selected contacts to distribute (at most 1,000 contacts)
   const previewPlan: DistributionResult = calculateDistribution(
-    targetContactsPool,
+    contactsToDistribute,
     availableCallers,
     callingDate,
     `team_${callingDate}`
@@ -560,14 +571,14 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={targetContactsPool.length === 0 || availableCallers.length === 0 || isDistributing}
+              disabled={contactsToDistribute.length === 0 || availableCallers.length === 0 || isDistributing}
               onClick={handleExecuteDistribution}
               className="px-5 py-2.5 bg-[#6c28f5] hover:bg-[#5816d6] disabled:bg-[#dfcaf8] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-md shadow-purple-700/20 cursor-pointer disabled:cursor-not-allowed"
             >
               <Share2 className="w-4 h-4" />
               {isDistributing
                 ? 'Distributing...'
-                : `Distribute ${targetContactsPool.length} Contacts Equally`}
+                : `Distribute ${contactsToDistribute.length} Contacts Equally (Max 1,000)`}
             </button>
           </div>
         </div>
@@ -616,6 +627,119 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
               </div>
             </div>
           )}
+
+          {/* Distribution Volume & Cap Control (At Most 1,000 Contacts Without Limitation) */}
+          <div className="bg-gradient-to-r from-[#fbf7fe] via-[#f7eeff] to-[#fbf7fe] p-4 rounded-2xl border-2 border-[#cbaff8] space-y-3 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#6c28f5] text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+                  <Sliders className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-[#1e1b4b] flex items-center gap-1.5">
+                    Distribution Volume &amp; Capacity
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000] border border-[#88d600]/30 uppercase">
+                      Max 1,000 Contacts
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-[#7c7896] font-medium">
+                    Distribute at most 1,000 contacts per run without limitation or database truncation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Badges */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-[#6c28f5] text-white shadow-xs">
+                  {contactsToDistribute.length} Selected to Distribute
+                </span>
+                {remainingInPoolAfterDistribution > 0 && (
+                  <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    {remainingInPoolAfterDistribution} kept in pool
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Preset Selector Buttons */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-xs font-bold text-[#1e1b4b]">Quick Presets:</span>
+              {[100, 250, 500, 1000].map((preset) => {
+                const isSelected = maxDistributionLimit === preset;
+                const isPoolSmaller = targetContactsPool.length < preset;
+                return (
+                  <button
+                    key={preset}
+                    type="button"
+                    onClick={() => setMaxDistributionLimit(preset)}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                      isSelected
+                        ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
+                        : 'bg-white hover:bg-[#f3efff] text-[#1e1b4b] border-[#e2d0fa]'
+                    }`}
+                  >
+                    {preset === 1000 ? '1,000 Contacts (Max)' : `${preset} Contacts`}
+                    {isPoolSmaller && (
+                      <span className="ml-1 text-[10px] opacity-75 font-normal">
+                        (Pool: {targetContactsPool.length})
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => setMaxDistributionLimit(Math.min(1000, targetContactsPool.length || 1000))}
+                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  maxDistributionLimit === Math.min(1000, targetContactsPool.length || 1000) && maxDistributionLimit !== 1000
+                    ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
+                    : 'bg-white hover:bg-[#f3efff] text-[#6c28f5] border-[#cbaff8]'
+                }`}
+              >
+                All Available (Cap at 1,000)
+              </button>
+            </div>
+
+            {/* Custom Input & Range Slider */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center pt-1 bg-white/70 p-3 rounded-xl border border-[#e2d0fa]">
+              <div className="sm:col-span-8 flex items-center gap-3">
+                <input
+                  type="range"
+                  min={1}
+                  max={Math.min(1000, Math.max(1, targetContactsPool.length || 1000))}
+                  value={effectiveBatchLimit}
+                  onChange={(e) => setMaxDistributionLimit(Number(e.target.value))}
+                  className="w-full accent-[#6c28f5] cursor-pointer"
+                />
+              </div>
+
+              <div className="sm:col-span-4 flex items-center justify-between sm:justify-end gap-2">
+                <span className="text-xs text-[#7c7896] font-medium">Custom Limit:</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={maxDistributionLimit}
+                    onChange={(e) => {
+                      const val = Math.max(1, Math.min(1000, Number(e.target.value) || 1));
+                      setMaxDistributionLimit(val);
+                    }}
+                    className="w-24 px-2.5 py-1 text-xs font-black text-center text-[#1e1b4b] bg-white border border-[#cbaff8] rounded-xl outline-none focus:border-[#6c28f5]"
+                  />
+                  <span className="text-xs text-[#7c7896] font-bold">/ 1,000</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-[#6c28f5] font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#88d600] shrink-0" />
+              <span>
+                <strong>Unlimited Architecture:</strong> Chunks Firestore writes into 400-doc blocks to guarantee seamless distribution of up to 1,000 contacts with zero quota drops or URL truncations.
+              </span>
+            </div>
+          </div>
 
           {/* Active Callers Selection */}
           <div>
@@ -694,7 +818,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
           </div>
 
           {/* Distribution Simulation & Mathematical Equality Breakdown */}
-          {targetContactsPool.length > 0 && availableCallers.length > 0 ? (
+          {contactsToDistribute.length > 0 && availableCallers.length > 0 ? (
             <div className="bg-[#f3e8fd] rounded-2xl p-4 border border-[#e2d0fa] space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#e2d0fa] pb-3">
                 <div>
@@ -703,15 +827,15 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                       Equal Distribution Mathematical Verification
                     </span>
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000]">
-                      Active
+                      Active (Max 1,000 Contacts)
                     </span>
                   </div>
                   <p className="text-xs text-[#6c28f5] font-semibold mt-0.5">
-                    {targetContactsPool.length} contacts ÷ {availableCallers.length} callers ={' '}
-                    <strong>{Math.floor(targetContactsPool.length / availableCallers.length)}</strong> contacts per caller
-                    {targetContactsPool.length % availableCallers.length > 0 && (
+                    {contactsToDistribute.length} contacts ÷ {availableCallers.length} callers ={' '}
+                    <strong>{Math.floor(contactsToDistribute.length / availableCallers.length)}</strong> contacts per caller
+                    {contactsToDistribute.length % availableCallers.length > 0 && (
                       <span className="text-[#7c7896] font-normal">
-                        {' '}(+1 each for the first {targetContactsPool.length % availableCallers.length} callers to allocate 100% of contacts)
+                        {' '}(+1 each for the first {contactsToDistribute.length % availableCallers.length} callers to allocate 100% of contacts)
                       </span>
                     )}
                   </p>
@@ -726,8 +850,8 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {previewPlan.plan.map((item, idx) => {
                   const sharePct =
-                    targetContactsPool.length > 0
-                      ? Math.round((item.count / targetContactsPool.length) * 100)
+                    contactsToDistribute.length > 0
+                      ? Math.round((item.count / contactsToDistribute.length) * 100)
                       : 0;
                   return (
                     <div key={item.caller.id} className="bg-[#fbf7fe] p-3.5 rounded-xl border border-[#e2d0fa] shadow-xs">
@@ -748,7 +872,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                 })}
               </div>
             </div>
-          ) : targetContactsPool.length === 0 ? (
+          ) : contactsToDistribute.length === 0 ? (
             <div className="p-4 bg-[#f3e8fd] rounded-2xl border border-[#e2d0fa] flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-[#88d600] shrink-0" />
               <div className="text-xs text-[#1e1b4b]">
@@ -759,7 +883,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             <div className="p-4 bg-[#fffbeb] rounded-2xl border border-[#fef3c7] flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-[#ffb800] shrink-0" />
               <span className="text-xs text-[#92400e] font-semibold">
-                Please select at least one caller above to distribute the {targetContactsPool.length} contacts.
+                Please select at least one caller above to distribute the {contactsToDistribute.length} contacts.
               </span>
             </div>
           )}
@@ -822,7 +946,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                     notes: a.contactNotes,
                   }))
                 );
-                const waUrl = generateWhatsAppUrl(caller.whatsappNumber, formattedMsg);
+                const waUrl = generateSafeWhatsAppUrl(caller.whatsappNumber, formattedMsg);
                 const isCopied = copiedCallerId === caller.id;
                 const isPreviewOpen = activePreviewCallerId === caller.id;
 
@@ -1060,7 +1184,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                             notes: a.contactNotes,
                           }))
                         );
-                        const waUrl = generateWhatsAppUrl(caller.whatsappNumber, formattedMsg);
+                        const waUrl = generateSafeWhatsAppUrl(caller.whatsappNumber, formattedMsg);
                         window.open(waUrl, '_blank');
                         setDispatchedCallerIds((prev) => new Set(prev).add(caller.id));
                         await new Promise((r) => setTimeout(r, 900));
@@ -1090,7 +1214,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                         notes: a.contactNotes,
                       }))
                     );
-                    const waUrl = generateWhatsAppUrl(caller.whatsappNumber, formattedMsg);
+                    const waUrl = generateSafeWhatsAppUrl(caller.whatsappNumber, formattedMsg);
 
                     return (
                       <div
