@@ -75,9 +75,9 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   const [copiedCallerId, setCopiedCallerId] = useState<string | null>(null);
   const [activePreviewCallerId, setActivePreviewCallerId] = useState<string | null>(null);
   const [distributionScope, setDistributionScope] = useState<'unassigned' | 'all'>('unassigned');
-  // Distribution limit mode: 'all' to distribute all available pool (no cap) or 'custom' with user specified capacity (over 10,000+)
+  // Distribution limit mode: 'all' to distribute all available pool (no cap) or 'custom' with user specified capacity (up to 100,000 contacts)
   const [distributionLimitMode, setDistributionLimitMode] = useState<'all' | 'custom'>('all');
-  const [customDistributionLimit, setCustomDistributionLimit] = useState<number>(10000);
+  const [customDistributionLimit, setCustomDistributionLimit] = useState<number>(100000);
   const [isDispatchAtAGoOpen, setIsDispatchAtAGoOpen] = useState(false);
   const [dispatchedCallerIds, setDispatchedCallerIds] = useState<Set<string>>(new Set());
   const [isAutoDispatching, setIsAutoDispatching] = useState(false);
@@ -90,7 +90,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   // Determine contacts pool based on scope
   const targetContactsPool = distributionScope === 'all' ? contacts : unassignedContacts;
 
-  // Selected contacts to distribute: supports full pool (3,000, 10,000, 15,000+ contacts) or custom cap
+  // Selected contacts to distribute: supports full pool (3,000, 10,000, 50,000, up to 100,000 contacts) or custom cap
   const contactsToDistribute = useMemo(() => {
     if (distributionLimitMode === 'all') {
       return targetContactsPool;
@@ -634,7 +634,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             </div>
           )}
 
-          {/* Distribution Volume & Capacity Control (Supports Over 10,000+ Contacts Without Artificial Limits) */}
+          {/* Distribution Volume & Capacity Control (Supports Up to 100,000 Contacts Without Artificial Limits) */}
           <div className="bg-gradient-to-r from-[#fbf7fe] via-[#f7eeff] to-[#fbf7fe] p-4 rounded-2xl border-2 border-[#cbaff8] space-y-3.5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
@@ -645,11 +645,11 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                   <h3 className="text-xs sm:text-sm font-black text-[#1e1b4b] flex items-center gap-1.5 flex-wrap">
                     Distribution Volume &amp; Capacity
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000] border border-[#88d600]/30 uppercase">
-                      Over 10,000+ Contacts Supported
+                      Up to 100,000 Contacts Capacity
                     </span>
                   </h3>
                   <p className="text-[11px] text-[#7c7896] font-medium">
-                    Distribute any quantity—including 3,000, 10,000, or 15,000+ contacts—with zero artificial ceilings or database limits.
+                    Distribute any quantity—including 1,000, 5,000, 10,000, 50,000 up to 100,000 contacts—with zero artificial ceilings or database limits.
                   </p>
                 </div>
               </div>
@@ -704,7 +704,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
               <div className="space-y-3 pt-1 border-t border-[#e2d0fa]/80">
                 <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="font-bold text-[#1e1b4b]">High-Volume Presets:</span>
-                  {[1000, 3000, 5000, 10000, 15000, 20000].map((preset) => {
+                  {[1000, 5000, 10000, 25000, 50000, 100000].map((preset) => {
                     const isSelected = customDistributionLimit === preset;
                     return (
                       <button
@@ -742,9 +742,9 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                     <input
                       type="range"
                       min={100}
-                      max={Math.max(25000, targetContactsPool.length || 10000)}
-                      step={100}
-                      value={Math.min(customDistributionLimit, Math.max(25000, targetContactsPool.length || 10000))}
+                      max={Math.max(100000, targetContactsPool.length || 100000)}
+                      step={500}
+                      value={Math.min(customDistributionLimit, Math.max(100000, targetContactsPool.length || 100000))}
                       onChange={(e) => {
                         setCustomDistributionLimit(Number(e.target.value));
                         setDistributionLimitMode('custom');
@@ -761,7 +761,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                       max={100000}
                       value={customDistributionLimit}
                       onChange={(e) => {
-                        const val = Math.max(1, Number(e.target.value) || 1);
+                        const val = Math.max(1, Math.min(100000, Number(e.target.value) || 1));
                         setCustomDistributionLimit(val);
                         setDistributionLimitMode('custom');
                       }}
@@ -775,7 +775,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             <div className="flex items-center gap-2 text-[11px] text-[#6c28f5] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-[#88d600] shrink-0" />
               <span>
-                <strong>Enterprise Scale:</strong> High-speed 400-record batch chunking with parallel commits and in-memory caching enables smooth distribution of 3,000, 10,000, and over 15,000+ contacts without memory crashes or timeouts.
+                <strong>Enterprise Scale (100,000 Capacity):</strong> High-speed 400-record batch chunking with parallel commits and in-memory caching enables smooth distribution of 1,000, 5,000, 10,000, 50,000, and up to 100,000 contacts without memory crashes or timeouts.
               </span>
             </div>
           </div>

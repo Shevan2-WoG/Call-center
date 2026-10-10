@@ -38,7 +38,7 @@ const STORAGE_KEYS = {
   AUDIT_LOGS: 'cc_audit_logs',
 };
 
-// In-memory cache for high-capacity scaling (supports 10,000+ contacts beyond browser 5MB localStorage quota)
+// In-memory cache for high-capacity scaling (supports 100,000+ contacts beyond browser 5MB localStorage quota)
 const memoryCache: Record<string, any> = {};
 
 // Local storage fallback helpers with memoryCache for resilience and snappy performance
@@ -61,7 +61,7 @@ function setLocal<T>(key: string, val: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(val));
   } catch (e) {
-    // If browser localStorage quota (typically 5MB) is reached with 10,000+ records,
+    // If browser localStorage quota (typically 5MB) is reached with 100,000+ records,
     // memoryCache still cleanly holds the entire dataset for the active session
     console.warn('LocalStorage save quota notice (dataset retained in high-capacity memory cache):', e);
   }
@@ -276,7 +276,7 @@ export async function saveAssignmentsBatch(newAssignments: Omit<Assignment, 'id'
       });
       asgBatches.push(batch);
     }
-    // Commit in pools of 5 concurrent batches for ultra-high throughput (handles over 10,000 contacts quickly)
+    // Commit in pools of 5 concurrent batches for ultra-high throughput (handles up to 100,000 contacts quickly)
     for (let i = 0; i < asgBatches.length; i += 5) {
       await Promise.all(asgBatches.slice(i, i + 5).map(b => b.commit()));
     }

@@ -602,7 +602,9 @@ export const CallerDashboardView: React.FC<CallerDashboardViewProps> = ({
                   <option value={500}>500</option>
                   <option value={1000}>1,000</option>
                   <option value={3000}>3,000</option>
-                  <option value={20000}>All (Over 10,000+)</option>
+                  <option value={10000}>10,000</option>
+                  <option value={50000}>50,000</option>
+                  <option value={100000}>All (Up to 100,000)</option>
                 </select>
               </div>
             </div>
