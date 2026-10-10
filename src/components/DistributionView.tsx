@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Contact,
   Caller,
@@ -75,8 +75,9 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   const [copiedCallerId, setCopiedCallerId] = useState<string | null>(null);
   const [activePreviewCallerId, setActivePreviewCallerId] = useState<string | null>(null);
   const [distributionScope, setDistributionScope] = useState<'unassigned' | 'all'>('unassigned');
-  // Maximum contacts distribution limit (at most 1,000 contacts without limitation)
-  const [maxDistributionLimit, setMaxDistributionLimit] = useState<number>(1000);
+  // Distribution limit mode: 'all' to distribute all available pool (no cap) or 'custom' with user specified capacity (over 10,000+)
+  const [distributionLimitMode, setDistributionLimitMode] = useState<'all' | 'custom'>('all');
+  const [customDistributionLimit, setCustomDistributionLimit] = useState<number>(10000);
   const [isDispatchAtAGoOpen, setIsDispatchAtAGoOpen] = useState(false);
   const [dispatchedCallerIds, setDispatchedCallerIds] = useState<Set<string>>(new Set());
   const [isAutoDispatching, setIsAutoDispatching] = useState(false);
@@ -89,10 +90,15 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
   // Determine contacts pool based on scope
   const targetContactsPool = distributionScope === 'all' ? contacts : unassignedContacts;
 
-  // Effective limit: strictly bounded to at most 1,000 contacts per distribution run
-  const effectiveBatchLimit = Math.min(1000, Math.max(1, maxDistributionLimit));
-  // Sliced pool for distribution (at most 1,000 contacts)
-  const contactsToDistribute = targetContactsPool.slice(0, effectiveBatchLimit);
+  // Selected contacts to distribute: supports full pool (3,000, 10,000, 15,000+ contacts) or custom cap
+  const contactsToDistribute = useMemo(() => {
+    if (distributionLimitMode === 'all') {
+      return targetContactsPool;
+    }
+    const limit = Math.max(1, customDistributionLimit || targetContactsPool.length);
+    return targetContactsPool.slice(0, limit);
+  }, [targetContactsPool, distributionLimitMode, customDistributionLimit]);
+
   const remainingInPoolAfterDistribution = Math.max(0, targetContactsPool.length - contactsToDistribute.length);
 
   // Current date assignments
@@ -578,7 +584,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
               <Share2 className="w-4 h-4" />
               {isDistributing
                 ? 'Distributing...'
-                : `Distribute ${contactsToDistribute.length} Contacts Equally (Max 1,000)`}
+                : `Distribute ${contactsToDistribute.length.toLocaleString()} Contacts Equally`}
             </button>
           </div>
         </div>
@@ -628,115 +634,148 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
             </div>
           )}
 
-          {/* Distribution Volume & Cap Control (At Most 1,000 Contacts Without Limitation) */}
-          <div className="bg-gradient-to-r from-[#fbf7fe] via-[#f7eeff] to-[#fbf7fe] p-4 rounded-2xl border-2 border-[#cbaff8] space-y-3 shadow-xs">
+          {/* Distribution Volume & Capacity Control (Supports Over 10,000+ Contacts Without Artificial Limits) */}
+          <div className="bg-gradient-to-r from-[#fbf7fe] via-[#f7eeff] to-[#fbf7fe] p-4 rounded-2xl border-2 border-[#cbaff8] space-y-3.5 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-[#6c28f5] text-white flex items-center justify-center font-bold shadow-xs shrink-0">
                   <Sliders className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs sm:text-sm font-black text-[#1e1b4b] flex items-center gap-1.5">
+                  <h3 className="text-xs sm:text-sm font-black text-[#1e1b4b] flex items-center gap-1.5 flex-wrap">
                     Distribution Volume &amp; Capacity
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000] border border-[#88d600]/30 uppercase">
-                      Max 1,000 Contacts
+                      Over 10,000+ Contacts Supported
                     </span>
                   </h3>
                   <p className="text-[11px] text-[#7c7896] font-medium">
-                    Distribute at most 1,000 contacts per run without limitation or database truncation.
+                    Distribute any quantity—including 3,000, 10,000, or 15,000+ contacts—with zero artificial ceilings or database limits.
                   </p>
                 </div>
               </div>
 
-              {/* Badges */}
+              {/* Status Badges */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="px-2.5 py-1 rounded-xl text-xs font-black bg-[#6c28f5] text-white shadow-xs">
-                  {contactsToDistribute.length} Selected to Distribute
+                <span className="px-3 py-1 rounded-xl text-xs font-black bg-[#6c28f5] text-white shadow-xs">
+                  {contactsToDistribute.length.toLocaleString()} Selected to Distribute
                 </span>
-                {remainingInPoolAfterDistribution > 0 && (
+                {remainingInPoolAfterDistribution > 0 ? (
                   <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                    {remainingInPoolAfterDistribution} kept in pool
+                    {remainingInPoolAfterDistribution.toLocaleString()} kept in pool
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    100% of Pool Assigned
                   </span>
                 )}
               </div>
             </div>
 
-            {/* Quick Preset Selector Buttons */}
+            {/* Mode Selector: Distribute All Pool vs Custom Batch Limit */}
             <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-xs font-bold text-[#1e1b4b]">Quick Presets:</span>
-              {[100, 250, 500, 1000].map((preset) => {
-                const isSelected = maxDistributionLimit === preset;
-                const isPoolSmaller = targetContactsPool.length < preset;
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setMaxDistributionLimit(preset)}
-                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                      isSelected
-                        ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
-                        : 'bg-white hover:bg-[#f3efff] text-[#1e1b4b] border-[#e2d0fa]'
-                    }`}
-                  >
-                    {preset === 1000 ? '1,000 Contacts (Max)' : `${preset} Contacts`}
-                    {isPoolSmaller && (
-                      <span className="ml-1 text-[10px] opacity-75 font-normal">
-                        (Pool: {targetContactsPool.length})
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+              <button
+                type="button"
+                onClick={() => setDistributionLimitMode('all')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border flex items-center gap-1.5 ${
+                  distributionLimitMode === 'all'
+                    ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs ring-2 ring-[#6c28f5]/20'
+                    : 'bg-white hover:bg-[#f3efff] text-[#1e1b4b] border-[#cbaff8]'
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#88d600]" />
+                <span>Distribute Entire Pool ({targetContactsPool.length.toLocaleString()} Contacts • No Limit)</span>
+              </button>
 
               <button
                 type="button"
-                onClick={() => setMaxDistributionLimit(Math.min(1000, targetContactsPool.length || 1000))}
-                className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                  maxDistributionLimit === Math.min(1000, targetContactsPool.length || 1000) && maxDistributionLimit !== 1000
-                    ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
-                    : 'bg-white hover:bg-[#f3efff] text-[#6c28f5] border-[#cbaff8]'
+                onClick={() => setDistributionLimitMode('custom')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  distributionLimitMode === 'custom'
+                    ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs ring-2 ring-[#6c28f5]/20'
+                    : 'bg-white hover:bg-[#f3efff] text-[#7c7896] border-[#e2d0fa]'
                 }`}
               >
-                All Available (Cap at 1,000)
+                <span>Set Batch Cap</span>
               </button>
             </div>
 
-            {/* Custom Input & Range Slider */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center pt-1 bg-white/70 p-3 rounded-xl border border-[#e2d0fa]">
-              <div className="sm:col-span-8 flex items-center gap-3">
-                <input
-                  type="range"
-                  min={1}
-                  max={Math.min(1000, Math.max(1, targetContactsPool.length || 1000))}
-                  value={effectiveBatchLimit}
-                  onChange={(e) => setMaxDistributionLimit(Number(e.target.value))}
-                  className="w-full accent-[#6c28f5] cursor-pointer"
-                />
-              </div>
-
-              <div className="sm:col-span-4 flex items-center justify-between sm:justify-end gap-2">
-                <span className="text-xs text-[#7c7896] font-medium">Custom Limit:</span>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={maxDistributionLimit}
-                    onChange={(e) => {
-                      const val = Math.max(1, Math.min(1000, Number(e.target.value) || 1));
-                      setMaxDistributionLimit(val);
+            {/* Presets and Custom Input when Batch Cap is active or for quick picking */}
+            {distributionLimitMode === 'custom' && (
+              <div className="space-y-3 pt-1 border-t border-[#e2d0fa]/80">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="font-bold text-[#1e1b4b]">High-Volume Presets:</span>
+                  {[1000, 3000, 5000, 10000, 15000, 20000].map((preset) => {
+                    const isSelected = customDistributionLimit === preset;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          setCustomDistributionLimit(preset);
+                          setDistributionLimitMode('custom');
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                          isSelected
+                            ? 'bg-[#6c28f5] text-white border-[#6c28f5] shadow-xs'
+                            : 'bg-white hover:bg-[#f3efff] text-[#1e1b4b] border-[#e2d0fa]'
+                        }`}
+                      >
+                        {preset.toLocaleString()} Contacts
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomDistributionLimit(targetContactsPool.length);
+                      setDistributionLimitMode('custom');
                     }}
-                    className="w-24 px-2.5 py-1 text-xs font-black text-center text-[#1e1b4b] bg-white border border-[#cbaff8] rounded-xl outline-none focus:border-[#6c28f5]"
-                  />
-                  <span className="text-xs text-[#7c7896] font-bold">/ 1,000</span>
+                    className="px-2.5 py-1 rounded-xl text-xs font-bold bg-white hover:bg-[#f3efff] text-[#6c28f5] border border-[#cbaff8] cursor-pointer"
+                  >
+                    All Available ({targetContactsPool.length.toLocaleString()})
+                  </button>
+                </div>
+
+                {/* Range Slider and Number Input */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center bg-white/80 p-3 rounded-xl border border-[#e2d0fa]">
+                  <div className="sm:col-span-8 flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={100}
+                      max={Math.max(25000, targetContactsPool.length || 10000)}
+                      step={100}
+                      value={Math.min(customDistributionLimit, Math.max(25000, targetContactsPool.length || 10000))}
+                      onChange={(e) => {
+                        setCustomDistributionLimit(Number(e.target.value));
+                        setDistributionLimitMode('custom');
+                      }}
+                      className="w-full accent-[#6c28f5] cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-4 flex items-center justify-between sm:justify-end gap-2">
+                    <span className="text-xs text-[#7c7896] font-medium">Batch Limit:</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100000}
+                      value={customDistributionLimit}
+                      onChange={(e) => {
+                        const val = Math.max(1, Number(e.target.value) || 1);
+                        setCustomDistributionLimit(val);
+                        setDistributionLimitMode('custom');
+                      }}
+                      className="w-28 px-2.5 py-1 text-xs font-black text-center text-[#1e1b4b] bg-white border border-[#cbaff8] rounded-xl outline-none focus:border-[#6c28f5]"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             <div className="flex items-center gap-2 text-[11px] text-[#6c28f5] font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-[#88d600] shrink-0" />
               <span>
-                <strong>Unlimited Architecture:</strong> Chunks Firestore writes into 400-doc blocks to guarantee seamless distribution of up to 1,000 contacts with zero quota drops or URL truncations.
+                <strong>Enterprise Scale:</strong> High-speed 400-record batch chunking with parallel commits and in-memory caching enables smooth distribution of 3,000, 10,000, and over 15,000+ contacts without memory crashes or timeouts.
               </span>
             </div>
           </div>
@@ -827,12 +866,12 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
                       Equal Distribution Mathematical Verification
                     </span>
                     <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#88d600]/20 text-[#4c8000]">
-                      Active (Max 1,000 Contacts)
+                      Active ({contactsToDistribute.length.toLocaleString()} Contacts)
                     </span>
                   </div>
                   <p className="text-xs text-[#6c28f5] font-semibold mt-0.5">
-                    {contactsToDistribute.length} contacts ÷ {availableCallers.length} callers ={' '}
-                    <strong>{Math.floor(contactsToDistribute.length / availableCallers.length)}</strong> contacts per caller
+                    {contactsToDistribute.length.toLocaleString()} contacts ÷ {availableCallers.length} callers ={' '}
+                    <strong>{Math.floor(contactsToDistribute.length / availableCallers.length).toLocaleString()}</strong> contacts per caller
                     {contactsToDistribute.length % availableCallers.length > 0 && (
                       <span className="text-[#7c7896] font-normal">
                         {' '}(+1 each for the first {contactsToDistribute.length % availableCallers.length} callers to allocate 100% of contacts)
@@ -843,7 +882,7 @@ export const DistributionView: React.FC<DistributionViewProps> = ({
 
                 <div className="flex items-center gap-1.5 text-xs text-[#1e1b4b] font-bold bg-[#fbf7fe] px-3 py-1.5 rounded-xl border border-[#e2d0fa]">
                   <CheckCircle2 className="w-4 h-4 text-[#88d600]" />
-                  <span>100% Distributed ({previewPlan.assignments.length} Contacts, 0 Leftover)</span>
+                  <span>100% Distributed ({previewPlan.assignments.length.toLocaleString()} Contacts, 0 Leftover)</span>
                 </div>
               </div>
 

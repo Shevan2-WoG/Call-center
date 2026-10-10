@@ -159,7 +159,7 @@ export function generateWhatsAppUrl(whatsappNumber: string, message: string): st
 
 /**
  * Generates safe wa.me URL that prevents HTTP 414 URI Too Long errors in web browsers
- * when a caller is assigned large batches (e.g. up to 1000 contacts distributed across the team).
+ * when a caller is assigned large batches (e.g. 3,000 to over 10,000+ contacts distributed across the team).
  * Safe threshold is ~1800 encoded characters.
  */
 export function generateSafeWhatsAppUrl(whatsappNumber: string, fullMessage: string, maxChars = 1800): string {
